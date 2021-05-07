@@ -1,0 +1,75 @@
+body{
+}
+
+.stage {
+  display: grid;
+  grid-template-rows: 1fr 2fr 9fr;
+  //height: 100vh;
+  position: absolute;
+  background-color: chartreuse;
+  width: 100%;
+  padding-bottom: 56.25%;
+}
+#battle-ui{
+  display: grid;
+  grid-template-columns: repeat(16,1fr);
+  justify-items: center;
+  align-items: center;
+}
+
+#tower-bar{
+  display: grid;
+  grid-template-columns: 1fr 2fr 2fr 2fr 2fr 2fr 2fr 2fr 1fr;
+  //justify-items: center;
+  //align-items: center;
+}
+.slot{
+  //justify-self: center;
+  //align-self: center;
+  justify-items: center;
+  align-items: center;
+}
+.btn{
+  //background-color: white;
+}
+
+#lives-icon{
+  grid-column: 2/3;
+}
+#lives{
+  grid-column: 3/4;
+}
+#waves{
+  grid-column: 7/9;
+}
+#current-wave{
+  grid-column: 9/10;
+}
+#total-waves{
+  grid-column: 10/11;
+}
+#menu{
+  grid-column: 15/16;
+}
+#start-frame{
+  grid-column: 1/2;
+  background-color: black;
+}
+#end-frame{
+  grid-column: 9/10;
+  background-color: black;
+}
+#game-area{
+  display: grid;
+  height: 100%;
+  grid-template-columns: repeat(16,1fr);
+  grid-template-rows: repeat(9, 1fr);
+  background-color: lightgray;
+  border-style: solid;
+  border-color: black;
+}
+.cell{
+  border-style: dashed;
+  border-width: thin;
+  border-color: black;
+}
