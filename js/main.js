@@ -76,38 +76,52 @@ class Tower{
         this.projImg = projImg
         this.htmlEle = htmlEle
         this.orientation = orientation
+        this.gameArea = document.getElementById('game-area')
         this.updateCurrentPosition()
     }
-    updateCurrentPosition(){
-        let gameArea = document.getElementById('game-area-container')
+    updateCenterPosition(){
         let cell = this.htmlEle.parentElement
-
+        let eleWidth = this.htmlEle.getBoundingClientRect().width
+        let eleHeight = this.htmlEle.getBoundingClientRect().height
+        console.log(`eleWH:${eleWidth},${eleHeight}`)
+        this.centerX = this.xPosRatio + (eleWidth/getParentWH(cell)[0])/2
+        this.centerY = this.yPosRatio + (eleHeight/getParentWH(cell)[1])/2
+        console.log(`CenterXY:${this.centerX},${this.centerY}`)
+    }
+    updateCurrentPosition(){
+        let cell = this.htmlEle.parentElement
         let cellId = cell.id
 
         this.xPosRatio = (cellId % 16) / 16
         this.yPosRatio = (Math.floor(cellId / 16))/ 9
-        console.log(`${this.xPosRatio},${this.yPosRatio}`)
+        console.log(`PosRatio:${this.xPosRatio},${this.yPosRatio}`)
+        this.updateCenterPosition()
         orientateElement(this.htmlEle, this.orientation)
     }
     aimAtClosestEnemy(){
         let minDist = 9999999999999
         let minX = 0; let minY = 0
+        let aTower = this.centerX * this.gameArea.clientWidth
+        let oTower = this.centerY * this.gameArea.clientHeight
+
         for(let enemy of state.activeEnemies){
-            let xDiffSq = Math.pow((this.xPosRatio - enemy.xPosRatio),2)
-            let yDiffSq = Math.pow((this.yPosRatio - enemy.yPosRatio),2)
+            let aEnemy = enemy.centerX * this.gameArea.clientWidth
+            let oEnemy = enemy.centerY * this.gameArea.clientHeight
+            let xDiffSq = Math.pow((aTower - aEnemy),2)
+            let yDiffSq = Math.pow((oTower - oEnemy),2)
             let dist = Math.sqrt(xDiffSq + yDiffSq)
 
             if (dist < minDist)
             {
                 minDist = dist
                 this.currTarget = enemy.htmlEle
-                minX = enemy.xPosRatio
-                minY = enemy.yPosRatio
+                minX = aEnemy
+                minY = oEnemy
                 //console.log(`${minDist}, ${this.currTarget}`)
             }
         }
-        let xDiff = (this.xPosRatio - minX)
-        let yDiff = (this.yPosRatio - minY)
+        let xDiff = (aTower - minX)
+        let yDiff = (oTower - minY)
         //console.log(`${xDiff}, ${yDiff}`)
         let deg = (Math.atan(yDiff / xDiff)/(2*Math.PI))*360
         if (yDiff < 0 && xDiff < 0){
@@ -115,7 +129,7 @@ class Tower{
         }else if (yDiff > 0 && xDiff < 0){
             deg += 180
         }
-        //console.log(deg)
+        console.log(deg)
         orientateElement(this.htmlEle, this.orientation + deg)
     }
 }
@@ -129,8 +143,17 @@ class Enemy{
         this.htmlEle = htmlEle
         this.xPosRatio = xPosRatio
         this.yPosRatio = yPosRatio
+        this.updateCenterPosition()
         this.prevWaypoint = 0
         this.nextWaypoint = []
+
+    }
+    updateCenterPosition(){
+        let eleWidth = this.htmlEle.getBoundingClientRect().width
+        let eleHeight = this.htmlEle.getBoundingClientRect().height
+
+        this.centerX = this.xPosRatio + (eleWidth/getParentWH(this.htmlEle)[0])/2
+        this.centerY = this.yPosRatio + (eleHeight/getParentWH(this.htmlEle)[1])/2
 
     }
     updateCurrentPosition(xRatioToAdd, yRatioToAdd){
@@ -176,7 +199,6 @@ class Enemy{
 initialiseTowerBar()
 initialiseGameArea()
 findCellMouseIsOver()
-// updateEnemyPosition()
 spawnEnemies()
 setInterval(updateElementMethods,100)
 
@@ -229,6 +251,11 @@ function initialiseGameArea(){
     }
 }
 
+function updateElementMethods(){
+    updateTowerTargets()
+    loadEnemyPosition()
+}
+
 function selectTower(e){
 
     let towerId = e.target.getAttribute('towerId')
@@ -237,9 +264,7 @@ function selectTower(e){
     state.isSelecting = true
     state.towerToBuild = towerId
 
-    let towerSelected = {}
-
-    towerSelected = findDataInArray(towerId, towerDataArr)
+    let towerSelected = findDataInArray(towerId, towerDataArr)
 
     let mouseIcon = document.createElement('img')
 
@@ -276,8 +301,8 @@ function buildTower(ele){
         towerImg.setAttribute('id', tower.id)
 
         state.activeTowers.push(tower)
-        console.log(state.activeTowers)
-        console.log(state.activeEnemies)
+        // console.log(state.activeTowers)
+        // console.log(state.activeEnemies)
     }
     state.isSelecting = false
 }
@@ -340,11 +365,6 @@ function getParentWH(childEle){
     arr[0] = childEle.parentElement.clientWidth
     arr[1] = childEle.parentElement.clientHeight
     return arr
-}
-
-function updateElementMethods(){
-    updateTowerTargets()
-    loadEnemyPosition()
 }
 
 function updateTowerTargets() {
