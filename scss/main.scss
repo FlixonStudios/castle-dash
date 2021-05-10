@@ -111,7 +111,7 @@ body{
   width: 100%
 }
 
-#enemy-container{
+#projectile-container, #enemy-container{
   position: absolute;
   width: 100%;
   height: 100%;
@@ -119,7 +119,7 @@ body{
   left: 0;
 }
 
-.enemy{
+.projectile, .enemy{
   position: absolute;
   display: flex;
   justify-content: center;
