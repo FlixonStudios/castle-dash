@@ -40,13 +40,28 @@ let enemyDataArr = [
         orientation: 0
     }
 ]
+let waveDataArr = [
+        {
+            id: 0,
+            // defines each subwave
+            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
+            enemyTypes: [0],
+            // defines no. of enemies per subwave
+            noOfEach: [1],
+            // defines interval between each subwave
+            intervalInMS: 500
+        }
+    ]
 // Class definitions
 
 let state = {
     isSelecting: false,
     towerToBuild: 0,
     activeTowers: [],
-    activeEnemies: []
+    activeEnemies: [],
+    pathArr: [[0,4],[15,4]],
+    totalWaves: 1,
+    waveInfo: [waveDataArr[0]]
 }
 
 class Tower{
@@ -64,65 +79,96 @@ class Tower{
         this.updateCurrentPosition()
     }
     updateCurrentPosition(){
-        this.x = this.htmlEle.getBoundingClientRect().x
-        this.y = this.htmlEle.getBoundingClientRect().y
-        console.log(`${this.x},${this.y}`)
+        let gameArea = document.getElementById('game-area-container')
+        let cell = this.htmlEle.parentElement
+
+        let cellId = cell.id
+
+        this.xPosRatio = (cellId % 16) / 16
+        this.yPosRatio = (Math.floor(cellId / 16))/ 9
+        console.log(`${this.xPosRatio},${this.yPosRatio}`)
         orientateElement(this.htmlEle, this.orientation)
     }
     aimAtClosestEnemy(){
         let minDist = 9999999999999
         let minX = 0; let minY = 0
         for(let enemy of state.activeEnemies){
-            let xDiffSq = Math.pow((this.x - enemy.x),2)
-            let yDiffSq = Math.pow((this.y - enemy.y),2)
-
-            // console.log(`${xDiffSq},${yDiffSq}`)
-
+            let xDiffSq = Math.pow((this.xPosRatio - enemy.xPosRatio),2)
+            let yDiffSq = Math.pow((this.yPosRatio - enemy.yPosRatio),2)
             let dist = Math.sqrt(xDiffSq + yDiffSq)
 
-            // console.log(dist)
             if (dist < minDist)
             {
                 minDist = dist
                 this.currTarget = enemy.htmlEle
-                minX = enemy.x
-                minY = enemy.y
-                console.log(`${minDist}, ${this.currTarget}`)
-
+                minX = enemy.xPosRatio
+                minY = enemy.yPosRatio
+                //console.log(`${minDist}, ${this.currTarget}`)
             }
         }
-        let xDiff = (this.x - minX)
-        let yDiff = (this.y - minY)
-        console.log(`${xDiff}, ${yDiff}`)
-
+        let xDiff = (this.xPosRatio - minX)
+        let yDiff = (this.yPosRatio - minY)
+        //console.log(`${xDiff}, ${yDiff}`)
         let deg = (Math.atan(yDiff / xDiff)/(2*Math.PI))*360
-
         if (yDiff < 0 && xDiff < 0){
             deg += 180
         }else if (yDiff > 0 && xDiff < 0){
             deg += 180
         }
-
-        console.log(deg)
+        //console.log(deg)
         orientateElement(this.htmlEle, this.orientation + deg)
     }
 }
 
 class Enemy{
-    constructor(name, health, enemyImg, htmlEle) {
+    constructor(name, health, enemyImg, htmlEle, xPosRatio, yPosRatio) {
         this.id = getNextID('enemy-',state.activeEnemies)
         this.name = name
         this.health = health
         this.enemyImg = enemyImg
         this.htmlEle = htmlEle
+        this.xPosRatio = xPosRatio
+        this.yPosRatio = yPosRatio
+        this.prevWaypoint = 0
+        this.nextWaypoint = []
+
+    }
+    updateCurrentPosition(xRatioToAdd, yRatioToAdd){
+        this.xPosRatio += xRatioToAdd
+        this.yPosRatio += yRatioToAdd
+        console.log(`UpdatePos:${this.x},${this.y}`)
+    }
+    loadCurrentPosition(){
+        this.x = getParentWH(this.htmlEle)[0] * this.xPosRatio
+        this.y = getParentWH(this.htmlEle)[1] * this.yPosRatio
+        this.htmlEle.style.left = `${this.x}px`
+        this.htmlEle.style.top = `${this.y}px`
+        //console.log(`LoadPos:${this.x},${this.y}`)
+    }
+    moveBy(xGrid, yGrid){
+        let xToMove = xGrid/16
+        let yToMove = yGrid/9
+
+        let xPos = getParentWH(this.htmlEle)[0] * xToMove + this.x
+        let yPos = getParentWH(this.htmlEle)[1] * yToMove + this.y
+
+        this.htmlEle.style.left = `${xPos}px`
+        this.htmlEle.style.top = `${yPos}px`
         this.updateCurrentPosition()
     }
-    updateCurrentPosition(){
-        this.x = this.htmlEle.getBoundingClientRect().x
-        this.y = this.htmlEle.getBoundingClientRect().y
-        console.log(`${this.x},${this.y}`)
+    findNextWaypoint(){
+        if(this.nextWaypoint === []){
+            this.nextWaypoint = state.pathArr[1]
+        }else{
+            this.nextWaypoint = state.pathArr[this.prevWaypoint + 1]
+        }
     }
+    updatePrevWaypoint(){
+        this.prevWaypoint += 1
+    }
+    moveToWaypoint(){
 
+    }
 }
 
 
@@ -130,53 +176,11 @@ class Enemy{
 initialiseTowerBar()
 initialiseGameArea()
 findCellMouseIsOver()
-spawnEnemy(0, 0, 0)
-spawnEnemy(1, 0, 150)
-spawnEnemy(0, 1000, 300)
-spawnEnemy(1, 500, 450)
-
-setInterval(updateElementMethods,5000)
+// updateEnemyPosition()
+spawnEnemies()
+setInterval(updateElementMethods,100)
 
 // Functions!!
-function findDataInArray(id,arr){
-    for (let t of arr)
-    {
-        if(t.id == id){
-            return t //returns the object
-            break
-        }
-    }
-}
-
-function getNextID(prefix,arr){
-    let uid = 0
-
-    if (arr.length !== 0){
-        for (let i of arr)
-        {
-            let currId = i.id
-            let str = currId.substr(prefix.length, currId.length+1)
-
-            if (uid < parseInt(str)){
-                uid = parseInt(str)
-            }
-        }
-        uid += 1
-    }
-    return `${prefix}${uid}`
-}
-
-function findElementInArr(arr, id){
-    for (let i of arr){
-        if (i.id == id){
-            return i
-        }
-    }
-}
-
-function orientateElement(imageEle, cwDegreesFromTop){
-    imageEle.setAttribute('style', `transform: rotate(${cwDegreesFromTop}deg)`)
-}
 
 function initialiseTowerBar(){
 
@@ -246,9 +250,167 @@ function selectTower(e){
 
     document.addEventListener('mousemove', followCursor)
    // mousing over game-area will highlight cell block
-    document.addEventListener('mouseover', highlightCell)
+
    // click to create new tower class
 
+}
+
+function buildTower(ele){
+    let data = {}
+    let id = state.towerToBuild
+    let cellDiv = ele
+
+    if (state.isSelecting){
+        data = findDataInArray(id, towerDataArr)
+
+        let towerImg = document.createElement('img')
+
+        towerImg.setAttribute('src', data.towerImg)
+        towerImg.setAttribute('class', 'tower-img')
+
+        cellDiv.appendChild(towerImg)
+
+        let tower = new Tower(data.name, data.cost, data.damage,
+            data.speed, data.range, data.towerImg, data.projImg, data.orientation, towerImg)
+
+        towerImg.setAttribute('id', tower.id)
+
+        state.activeTowers.push(tower)
+        console.log(state.activeTowers)
+        console.log(state.activeEnemies)
+    }
+    state.isSelecting = false
+}
+
+function spawnEnemies(){
+    let spawnPoint = state.pathArr[0]
+    let divX = spawnPoint[0]
+    let divY = spawnPoint[1]
+
+    let gridXOffset = (1/16)/2
+    let gridYOffset = (1/9)/2
+
+    let x = divX/16 // + gridXOffset
+    let y = divY/9 // + gridYOffset
+    //console.log(`${x}, ${y}`)
+    let waveInfoArr = state.waveInfo
+
+    for(let waveCount = 0; waveCount < state.totalWaves; waveCount++){
+        let waveData = waveInfoArr[waveCount]
+
+        for(let subwave = 0; subwave < waveData.enemyTypes.length; subwave++){
+            setTimeout(function(){
+                let enemyToSpawn = waveData.enemyTypes[subwave]
+                for (let noOfEnemies = 0; noOfEnemies < waveData.noOfEach[subwave]; noOfEnemies++){
+                    setTimeout(spawnEnemy(enemyToSpawn,x,y),0)
+                }
+            }, waveData.intervalInMS)
+        }
+    }
+}
+
+function spawnEnemy(id, xRatio, yRatio){
+    let data = {}
+    data = findDataInArray(id, enemyDataArr)
+    let enemyDiv = document.createElement('div')
+    let enemyImg = document.createElement('img')
+
+    enemyImg.setAttribute('src', data.enemyImg)
+    enemyImg.setAttribute('class','enemy-img')
+    enemyDiv.setAttribute('class', 'enemy')
+
+    let gameArea = document.getElementById('enemy-container')
+
+    enemyDiv.appendChild(enemyImg)
+    gameArea.appendChild(enemyDiv)
+
+    let xPos = getParentWH(enemyDiv)[0] * xRatio
+    let yPos = getParentWH(enemyDiv)[1] * yRatio
+
+    enemyDiv.style.top = yPos + "px"
+    enemyDiv.style.left = xPos + "px"
+
+    let enemy = new Enemy(data.name, data.health, data.enemyImg, enemyDiv, xRatio, yRatio)
+
+    state.activeEnemies.push(enemy)
+}
+
+function getParentWH(childEle){
+    let arr = []
+    arr[0] = childEle.parentElement.clientWidth
+    arr[1] = childEle.parentElement.clientHeight
+    return arr
+}
+
+function updateElementMethods(){
+    updateTowerTargets()
+    loadEnemyPosition()
+}
+
+function updateTowerTargets() {
+    if(state.activeTowers.length !== 0){
+        for(let tower of state.activeTowers){
+            tower.aimAtClosestEnemy()
+        }
+    }
+}
+
+function loadEnemyPosition(){
+    if(state.activeEnemies.length!==0){
+        for(let enemy of state.activeEnemies){
+            enemy.loadCurrentPosition()
+        }
+    }
+}
+
+function removeMouseIcon(ele){
+    document.removeEventListener('mousemove', followCursor)
+    ele.remove()
+}
+
+function followCursor(e){
+    let x = e.clientX
+    let y = e.clientY
+
+    let cursor = document.getElementById('follow-cursor')
+    cursor.style.left = x + "px"
+    cursor.style.top = y +"px"
+}
+
+function findDataInArray(id,arr){
+    for (let t of arr)
+    {
+        if(t.id == id){
+            return t //returns the object
+            break
+        }
+    }
+}
+
+function getNextID(prefix,arr){
+    let uid = 0
+
+    if (arr.length !== 0){
+        for (let i of arr)
+        {
+            let currId = i.id
+            let str = currId.substr(prefix.length, currId.length+1)
+
+            if (uid < parseInt(str)){
+                uid = parseInt(str)
+            }
+        }
+        uid += 1
+    }
+    return `${prefix}${uid}`
+}
+
+function findElementInArr(arr, id){
+    for (let i of arr){
+        if (i.id == id){
+            return i
+        }
+    }
 }
 
 function findCellMouseIsOver(){
@@ -270,89 +432,6 @@ function findCellMouseIsOver(){
     })
 }
 
-function buildTower(ele){
-    let data = {}
-    let id = state.towerToBuild
-    let cellDiv = ele
-
-    if (state.isSelecting){
-        data = findDataInArray(id, towerDataArr)
-
-        let towerImg = document.createElement('img')
-
-        towerImg.setAttribute('src', data.towerImg)
-
-        cellDiv.appendChild(towerImg)
-
-        let tower = new Tower(data.name, data.cost, data.damage,
-            data.speed, data.range, data.towerImg, data.projImg, data.orientation, towerImg)
-
-        towerImg.setAttribute('id', tower.id)
-
-        state.activeTowers.push(tower)
-        console.log(state.activeTowers)
-        console.log(state.activeEnemies)
-    }
-    state.isSelecting = false
+function orientateElement(imageEle, cwDegreesFromTop){
+    imageEle.setAttribute('style', `transform: rotate(${cwDegreesFromTop}deg)`)
 }
-
-function spawnEnemy(id, xPos, yPos){
-    let data = {}
-    data = findDataInArray(id, enemyDataArr)
-    let enemyDiv = document.createElement('div')
-    let enemyImg = document.createElement('img')
-
-    enemyImg.setAttribute('src', data.enemyImg)
-    enemyDiv.setAttribute('class', 'enemy')
-
-    enemyDiv.style.top = yPos + "px"
-    enemyDiv.style.left = xPos + "px"
-
-    let gameArea = document.querySelector('#game-area-container')
-
-    enemyDiv.appendChild(enemyImg)
-    gameArea.appendChild(enemyDiv)
-
-    let enemy = new Enemy(data.name, data.health, data.enemyImg, enemyDiv)
-
-    state.activeEnemies.push(enemy)
-}
-
-function updateTowerTargets() {
-    if(state.activeTowers.length !== 0){
-        for(let tower of state.activeTowers) {
-            tower.aimAtClosestEnemy()
-        }
-    }
-
-}
-
-function updateElementMethods(){
-    updateTowerTargets();
-}
-
-function highlightCell(){
-
-}
-
-function triggerObjectMethods(t){
-
-}
-
-
-
-function followCursor(e){
-    let x = e.clientX
-    let y = e.clientY
-
-    let cursor = document.getElementById('follow-cursor')
-    cursor.style.left = x + "px"
-    cursor.style.top = y +"px"
-}
-
-function removeMouseIcon(ele){
-    document.removeEventListener('mousemove', followCursor)
-    ele.remove()
-
-}
-

@@ -105,8 +105,31 @@ body {
   align-items: center;
 }
 
+.tower-img {
+  margin: 0 auto;
+  width: 100%;
+}
+
+#enemy-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
 .enemy {
   position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 11.11%;
+  width: 6.25%;
+}
+
+.enemy-img {
+  margin: 0 auto;
+  width: 100%;
 }
 
 #highlighted {
@@ -114,7 +137,8 @@ body {
 }
 
 #follow-cursor {
-  position: absolute;
+  position: fixed;
+  overflow: scroll;
   transition: 0.1s;
   transform: translate(-50%, -50%);
 }
