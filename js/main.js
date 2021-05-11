@@ -4,7 +4,7 @@ let towerDataArr =[
     {
         id: 0,
         name: 'Turret',
-        cost: 100,
+        cost: 10,
         damage: 1,
         speed: 2,
         range: 4,
@@ -15,7 +15,7 @@ let towerDataArr =[
     {
         id: 1,
         name: 'Cannon',
-        cost: 200,
+        cost: 20,
         damage: 2,
         speed: 1,
         range: 4,
@@ -31,7 +31,8 @@ let enemyDataArr = [
         health: 3,
         speed: 0.01,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile245.png',
-        orientation: 0
+        orientation: 0,
+        reward: 2
     },
     {
         id: 1,
@@ -39,7 +40,8 @@ let enemyDataArr = [
         health: 6,
         speed: 0.01,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile246.png',
-        orientation: 0
+        orientation: 0,
+        reward: 4
     }
 ]
 let waveDataArr = [
@@ -104,12 +106,13 @@ let state = {
     activeEnemies: [],
     activeProjectiles:[],
     pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
-    totalWaves: 1,
-    waveInfo: [waveDataArr[2]],// [waveDataArr[0], waveDataArr[1]],
+    currentWave: 1,
+    totalWaves: 2,
+    waveInfo: [waveDataArr[0], waveDataArr[1]], // [waveDataArr[2]],//
     timeBetweenWaves: 2000,
     scene: {},
     playerHealth: 3,
-    playerGold: 0,
+    playerResource: 100,
 }
 
 // Class definitions
@@ -231,11 +234,12 @@ class Tower{
 }
 
 class Enemy{
-    constructor(name, health, speed, enemyImg, htmlEle, xPosRatio, yPosRatio) {
+    constructor(name, health, speed, reward, enemyImg, htmlEle, xPosRatio, yPosRatio) {
         this.id = getNextID('enemy-',state.activeEnemies)
         this.name = name
         this.health = health
         this.speed = speed
+        this.reward = reward
         this.enemyImg = enemyImg
         this.htmlEle = htmlEle //enemyDiv
         this.xPosRatio = xPosRatio
@@ -261,7 +265,6 @@ class Enemy{
         this.updateCenterPosition()
         this.updateCollider()
     }
-
     loadCurrentPosition(){
         this.x = getParentWH(this.htmlEle)[0] * this.xPosRatio
         this.y = getParentWH(this.htmlEle)[1] * this.yPosRatio
@@ -273,7 +276,6 @@ class Enemy{
             this.xPosRatio, this.yPosRatio, 0.5)
     }
     findNextWaypoint(){
-
         if(this.nextWaypoint === []){
             this.nextWaypoint = state.pathArr[1]
         }else if(this.prevWaypoint+1 < state.pathArr.length){
@@ -281,17 +283,24 @@ class Enemy{
         }else{
             this.nextWaypoint = state.pathArr[state.pathArr.length-1]
             this.htmlEle.style.display = 'none'
+            this.damagePlayer()
             this.toDestroy = true
         }
     }
     isAtNextWaypoint(){
-        let nextXGrid = this.nextWaypoint[0] //+ gridToRatio(16, 0.5)
-        let nextYGrid = this.nextWaypoint[1] //+ gridToRatio(9, 0.5)
+        let nextXGrid = this.nextWaypoint[0]//+ gridToRatio(16, 0.5)
+        let nextYGrid = this.nextWaypoint[1]//+ gridToRatio(9, 0.5)
 
-        let xDeltaRatio = gridToRatio(16, nextXGrid) - this.centerX
-        let yDeltaRatio = gridToRatio(9, nextYGrid) - this.centerY
+        let xDeltaRatio = gridToRatio(16, nextXGrid + 0.5)
+            - this.centerX
+        let yDeltaRatio = gridToRatio(9, nextYGrid + 0.5)
+            - this.centerY
         // need to amend percentage as pixels on y and x is different
-        return (Math.abs(xDeltaRatio) < 0.03 && Math.abs(yDeltaRatio) < 0.03)
+
+        let xError = xDeltaRatio / (1/state.scene.xGrid)
+        let yError = yDeltaRatio / (1/state.scene.yGrid)
+        // console.log(`DistToX:${xError}|DistToY:${yError}`)
+        return (Math.abs(xError) < 0.01 && Math.abs(yError) < 0.01)
     }
     move(){
         if(this.isAtNextWaypoint()){
@@ -303,13 +312,13 @@ class Enemy{
         let nextXGrid = this.nextWaypoint[0]//+ gridToRatio(16, 0.5)
         let nextYGrid = this.nextWaypoint[1]//+ gridToRatio(9, 0.5)
 
-        let xDeltaRatio = gridToRatio(16, nextXGrid) - this.centerX
-        let yDeltaRatio = gridToRatio(9, nextYGrid) - this.centerY
+        let xDeltaRatio = gridToRatio(16, nextXGrid + 0.5)
+                            - this.centerX
+        let yDeltaRatio = gridToRatio(9, nextYGrid + 0.5)
+                            - this.centerY
 
-        let magnitude = Math.sqrt(Math.pow(xDeltaRatio,2) + Math.pow(yDeltaRatio,2))
-
-        let unitXRatio = xDeltaRatio / magnitude
-        let unitYRatio = yDeltaRatio / magnitude
+        let unitXRatio = xDeltaRatio / magnitude(xDeltaRatio,yDeltaRatio)
+        let unitYRatio = yDeltaRatio / magnitude(xDeltaRatio,yDeltaRatio)
 
         let newXPosRatio = unitXRatio * speed * state.gameSpeed/10
         let newYPosRatio = unitYRatio * speed * state.gameSpeed/10
@@ -321,13 +330,19 @@ class Enemy{
         let enemyIndex = state.activeEnemies.findIndex(function (ele){
             return (ele['id'] === currId)
         })
+
         state.activeEnemies.splice(enemyIndex, 1)
         this.htmlEle.remove()
     }
     checkHealth(){
         if(this.health <= 0){
+            updateResourceValue(this.reward)
             this.toDestroy = true
         }
+    }
+    damagePlayer(){
+        let damage = 1
+        updatePlayerHealth(-damage)
     }
 }
 
@@ -433,6 +448,7 @@ class Projectile{
 
 // Main Execution
 
+initialiseUI()
 initialiseTowerBar()
 initialiseGameArea()
 findCellMouseIsOver()
@@ -442,18 +458,24 @@ setInterval(updateElementMethods,16/state.gameSpeed)
 // Functions!!
 
 // Run-Once Functions
-function initialiseTowerBar(){
 
+function initialiseUI(){
+    updatePlayerHealth()
+    updateWaveValue()
+    updateResourceValue()
+}
+
+function initialiseTowerBar(){
     towerDataArr.forEach(function(tower, index){
 
         let towerSlot = document.getElementById(`tower-slot-${index}`)
 
         //Create Element
         let newTowerBtn = document.createElement('input')
+        let newTowerBtnText = document.createElement('p')
+        let newTowerCostText = document.createElement('p')
 
         // Create text or content
-        let newTowerBtnText = document.createElement('p')
-
         newTowerBtn.setAttribute('class', 'btn')
         newTowerBtn.setAttribute('class', 'tower-img')
         newTowerBtn.setAttribute('type', 'image')
@@ -467,16 +489,16 @@ function initialiseTowerBar(){
         newTowerBtn.addEventListener('click', selectTower)
 
         newTowerBtnText.textContent = tower.name
-        newTowerBtnText.setAttribute('class', 'tower-name')
+        newTowerBtnText.setAttribute('class', 'tower-name text' )
+        //newTowerBtnText.setAttribute('class', 'text')
 
-
+        newTowerCostText.textContent = tower.cost
+        newTowerCostText.setAttribute('class', 'tower-cost')
+        newTowerCostText.setAttribute('class', 'text')
         // Append
         towerSlot.appendChild(newTowerBtn)
         towerSlot.appendChild(newTowerBtnText)
-
-
-
-        // Add functionality to buttons
+        towerSlot.appendChild(newTowerCostText)
 
     })
 }
@@ -592,9 +614,12 @@ function selectTower(e){
 function buildTower(ele){
     let data = {}
     let id = state.towerToBuild
-
-    if (state.isSelecting){
-        data = findObjectInArray(id, towerDataArr)
+    data = findObjectInArray(id, towerDataArr)
+    let hasResource = false
+    hasResource = (state.playerResource >= data.cost)
+    console.log(`${state.playerResource}, ${data.cost}`)
+    console.log(hasResource)
+    if (state.isSelecting && hasResource){
 
         let towerImg = document.createElement('img')
 
@@ -609,12 +634,41 @@ function buildTower(ele){
         towerImg.setAttribute('id', tower.id)
 
         state.activeTowers.push(tower)
+        updateResourceValue(-data.cost)
     }
     state.isSelecting = false
 }
-function updatePlayerHealth(){
+function updatePlayerHealth(change=0){
+    state.playerHealth += change
 
+    let healthHTML = document.getElementById('lives-text')
+    healthHTML.textContent = state.playerHealth
 }
+function updateWaveValue(currentWave = 1){
+    let totalWaveHTML = document.getElementById('total-waves-text')
+    let currWaveHTML = document.getElementById('current-wave-text')
+
+    totalWaveHTML.textContent = state.totalWaves
+    currWaveHTML.textContent = state.currentWave
+}
+function updateResourceValue(change = 0){
+    let resourceHTML = document.getElementById('cash-text')
+    let resourceStr = []
+
+    state.playerResource += change
+
+    let resource = state.playerResource.toString()
+    console.log(resource)
+    resourceStr = resource.split("")
+
+    if(resourceStr.length < 4){
+        for(let i = 4 - resourceStr.length; i > 0; i--){
+            resourceStr.unshift('0')
+        }
+    }
+    resourceHTML.textContent = resourceStr.join("")
+}
+
 function spawnEnemies(){
     let spawnPoint = state.pathArr[0]
     let divX = spawnPoint[0]
@@ -629,9 +683,8 @@ function spawnEnemies(){
     for(let waveCount = 0; waveCount < state.totalWaves; waveCount++){
         let waveData = waveInfoArr[waveCount]
         setTimeout(function(){
-
-            for(let subwave = 0; subwave < waveData.enemyTypes.length; subwave++){
-
+            for(let subwave = 0; subwave < waveData.enemyTypes.length;
+                subwave++){
                 setTimeout(function(){
                     let enemyToSpawn = waveData.enemyTypes[subwave]
 
@@ -646,6 +699,7 @@ function spawnEnemies(){
             }
             timeline += waveData.pauseTillNextWave
         }, timeline)
+        state.currentWave+=1
     }
 }
 function spawnEnemy(id, xRatio, yRatio){
@@ -668,7 +722,7 @@ function spawnEnemy(id, xRatio, yRatio){
     enemyDiv.style.top = yPos + "px"
     enemyDiv.style.left = xPos + "px"
 
-    let enemy = new Enemy(data.name, data.health, data.speed,
+    let enemy = new Enemy(data.name, data.health, data.speed,data.reward,
                             data.enemyImg, enemyDiv, xRatio, yRatio)
 
     state.activeEnemies.push(enemy)
