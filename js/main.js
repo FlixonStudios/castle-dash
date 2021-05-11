@@ -28,16 +28,16 @@ let enemyDataArr = [
     {
         id: 0,
         name: 'Soldier',
-        health: 10,
-        speed: 0.03,
+        health: 3,
+        speed: 0.01,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile245.png',
         orientation: 0
     },
     {
         id: 1,
         name: 'EliteSoldier',
-        health: 20,
-        speed: 0.03,
+        health: 6,
+        speed: 0.01,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile246.png',
         orientation: 0
     }
@@ -47,25 +47,48 @@ let waveDataArr = [
             id: 0,
             // defines each subwave
             // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
+            enemyTypes: [0, 0, 0, 0, 0],
+            // defines no. of enemies per subwave
+            noOfEach: [1, 1, 1, 1, 1],
+            // defines interval between each subwave
+            interval: [2000, 2000, 2000, 2000, 2000],
+            pauseTillNextWave: 7000
+        },
+        {
+            id: 1,
+            // defines each subwave
+            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
+            enemyTypes: [0, 1, 0, 1, 0],
+            // defines no. of enemies per subwave
+            noOfEach: [1, 1, 1, 1, 1],
+            // defines interval between each subwave
+            interval: [2000, 3000, 2000, 3000, 2000],
+            pauseTillNextWave: 1000
+        },
+        {
+            id: 2,
+            // defines each subwave
+            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
             enemyTypes: [0],
             // defines no. of enemies per subwave
             noOfEach: [1],
             // defines interval between each subwave
-            intervalInMS: 500
+            interval: [1000],
+            pauseTillNextWave: 7000
         }
     ]
 let projectileDataArr = [
     {
         id: 0,
         name: 'cannonball',
-        speed: 4,
+        speed: 0.4,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile272.png',
         orientation: 0
     },
     {
         id: 1,
         name: 'fireshot',
-        speed: 8,
+        speed: 0.8,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile297.png',
         orientation: 90
     }
@@ -82,8 +105,11 @@ let state = {
     activeProjectiles:[],
     pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
     totalWaves: 1,
-    waveInfo: [waveDataArr[0]],
-    scene: {}
+    waveInfo: [waveDataArr[2]],// [waveDataArr[0], waveDataArr[1]],
+    timeBetweenWaves: 2000,
+    scene: {},
+    playerHealth: 3,
+    playerGold: 0,
 }
 
 // Class definitions
@@ -128,10 +154,10 @@ class Tower{
         let cell = this.htmlEle.parentElement
         let eleWidth = this.htmlEle.getBoundingClientRect().width
         let eleHeight = this.htmlEle.getBoundingClientRect().height
-        console.log(`eleWH:${eleWidth},${eleHeight}`)
+        // console.log(`eleWH:${eleWidth},${eleHeight}`)
         this.centerX = this.xPosRatio + (eleWidth/getParentWH(cell)[0])/2
         this.centerY = this.yPosRatio + (eleHeight/getParentWH(cell)[1])/2
-        console.log(`CenterXY:${this.centerX},${this.centerY}`)
+        // console.log(`CenterXY:${this.centerX},${this.centerY}`)
     }
     updateCurrentPosition(){
         let cell = this.htmlEle.parentElement
@@ -159,7 +185,7 @@ class Tower{
             if (dist < minDist)
             {
                 minDist = dist
-                this.currTarget = enemy.htmlEle
+                this.currTarget = enemy
                 minX = aEnemy
                 minY = oEnemy
             }
@@ -174,20 +200,32 @@ class Tower{
 
         orientateElement(this.htmlEle, this.orientation + deg)
     }
+    isInRange(target){
+        let gameParams = state.scene
+
+        let xDiff = (target.centerX - this.centerX) * gameParams.sceneW
+        let yDiff = (target.centerY - this.centerY) * gameParams.sceneH
+
+        let range = this.range * magnitude(gameParams.sceneW/gameParams.xGrid,
+                                            gameParams.sceneH/gameParams.yGrid)
+        let dist = magnitude(xDiff, yDiff)
+
+        return (dist <= range)
+    }
     fire(){
-        let data = this.projectileData
-        //console.log(data)
-        if (this.reloadTime <= 0){
+        if(this.isInRange(this.currTarget)){
+            let data = this.projectileData
+            if (this.reloadTime <= 0){
+                let p = new Projectile(data.name, data.speed, this.damage, data.projImg,
+                    data.orientation, this.currTarget,
+                    this.xPosRatio, this.yPosRatio,
+                    this.xDir, this.yDir)
+                state.activeProjectiles.push(p)
 
-            let p = new Projectile(data.name, data.speed, data.projImg,
-                                    data.orientation, this.currTarget,
-                                    this.xPosRatio, this.yPosRatio,
-                                    this.xDir, this.yDir)
-            state.activeProjectiles.push(p)
-
-            this.reloadTime = 100
-        }else{
-            this.reloadTime -= this.speed
+                this.reloadTime = 100
+            }else{
+                this.reloadTime -= this.speed
+            }
         }
     }
 }
@@ -203,8 +241,7 @@ class Enemy{
         this.xPosRatio = xPosRatio
         this.yPosRatio = yPosRatio
         this.updateCenterPosition()
-        this.collider = setCollider(this.centerX, this.centerY,
-            this.xPosRatio, this.yPosRatio, 0.5)
+        this.updateCollider()
         this.prevWaypoint = 0
         this.nextWaypoint = []
         this.findNextWaypoint()
@@ -222,20 +259,18 @@ class Enemy{
         this.xPosRatio += xRatioToAdd
         this.yPosRatio += yRatioToAdd
         this.updateCenterPosition()
+        this.updateCollider()
     }
-    destroyThis(){
-        let currId = this.id
-        let enemyIndex = state.activeEnemies.findIndex(function (ele){
-            return (ele['id'] === currId)
-        })
-        state.activeEnemies.splice(enemyIndex, 1)
-        this.htmlEle.remove()
-    }
+
     loadCurrentPosition(){
         this.x = getParentWH(this.htmlEle)[0] * this.xPosRatio
         this.y = getParentWH(this.htmlEle)[1] * this.yPosRatio
         this.htmlEle.style.left = `${this.x}px`
         this.htmlEle.style.top = `${this.y}px`
+    }
+    updateCollider(){
+        this.collider = setCollider(this.centerX, this.centerY,
+            this.xPosRatio, this.yPosRatio, 0.5)
     }
     findNextWaypoint(){
 
@@ -281,14 +316,28 @@ class Enemy{
 
         this.updateCurrentPosition(newXPosRatio, newYPosRatio)
     }
+    destroyThis(){
+        let currId = this.id
+        let enemyIndex = state.activeEnemies.findIndex(function (ele){
+            return (ele['id'] === currId)
+        })
+        state.activeEnemies.splice(enemyIndex, 1)
+        this.htmlEle.remove()
+    }
+    checkHealth(){
+        if(this.health <= 0){
+            this.toDestroy = true
+        }
+    }
 }
 
 class Projectile{
-    constructor(name, speed, projImg, orientation,
+    constructor(name, speed, damage, projImg, orientation,
                 target, xPosRatio, yPosRatio, xDir, yDir) {
         this.id = getNextID('proj-',state.activeProjectiles)
         this.name = name
         this.speed = speed
+        this.damage = damage
         this.projImg = projImg
         this.orientation = orientation
         this.target = target
@@ -300,8 +349,7 @@ class Projectile{
         this.toDestroy = false
         this.initialiseProjectile()
         this.updateCenterPosition()
-        this.collider = setCollider(this.centerX, this.centerY,
-            this.xPosRatio, this.yPosRatio, 0.5)
+        this.updateCollider()
     }
     initialiseProjectile(){
         let projDiv = document.createElement('div')
@@ -328,13 +376,13 @@ class Projectile{
         this.yPosRatio += yRatioToAdd
         this.updateCenterPosition()
         this.loadCurrentPosition()
+        this.updateCollider()
     }
     updateCenterPosition(){
         let eleWidth = this.htmlEle.getBoundingClientRect().width
         let eleHeight = this.htmlEle.getBoundingClientRect().height
         this.centerX = this.xPosRatio + (eleWidth/state.scene.sceneW)/2
         this.centerY = this.yPosRatio + (eleHeight/state.scene.sceneW)/2
-
     }
     loadCurrentPosition(){
         this.x = getParentWH(this.htmlEle)[0] * this.xPosRatio
@@ -342,8 +390,11 @@ class Projectile{
         this.htmlEle.style.left = `${this.x}px`
         this.htmlEle.style.top = `${this.y}px`
     }
+    updateCollider(){
+        this.collider = setCollider(this.centerX, this.centerY,
+            this.xPosRatio, this.yPosRatio, 0.75)
+    }
     move(){
-
         if (!this.isOutOfBounds()){
             let unitXRatio = -this.xDir
             let unitYRatio = -this.yDir
@@ -366,6 +417,10 @@ class Projectile{
             return false
         }
     }
+    dealDamage(targetToDamage){
+        targetToDamage.health -= this.damage
+        this.toDestroy = true
+    }
     destroyThis(){
         let currId = this.id
         let projIndex = state.activeProjectiles.findIndex(function (ele){
@@ -382,7 +437,7 @@ initialiseTowerBar()
 initialiseGameArea()
 findCellMouseIsOver()
 spawnEnemies()
-setInterval(updateElementMethods,100/state.gameSpeed)
+setInterval(updateElementMethods,16/state.gameSpeed)
 
 // Functions!!
 
@@ -436,13 +491,13 @@ function initialiseGameArea(){
 function updateElementMethods(){
     updateTowerTargets()
     loadEnemyPosition()
+    checkColliders()
     fireProjectiles()
     moveProjectiles()
     moveEnemies()
     destroyEnemies()
     destroyProjectiles()
 }
-
 function updateTowerTargets() {
     if(state.activeTowers.length !== 0){
         for(let tower of state.activeTowers){
@@ -450,11 +505,24 @@ function updateTowerTargets() {
         }
     }
 }
-
 function loadEnemyPosition(){
     if(state.activeEnemies.length!==0){
         for(let enemy of state.activeEnemies){
             enemy.loadCurrentPosition()
+        }
+    }
+}
+function checkColliders(){
+    if(state.activeEnemies.length !== 0 &&
+        state.activeProjectiles.length !== 0){
+        for(let enemy of state.activeEnemies){
+            for (let projectile of state.activeProjectiles){
+                if(isCollided(enemy, projectile)){
+                    projectile.dealDamage(enemy)
+                    enemy.checkHealth()
+                    console.log("HIT")
+                }
+            }
         }
     }
 }
@@ -466,7 +534,6 @@ function moveEnemies(){
         }
     }
 }
-
 function destroyEnemies(){
     for(let enemy of state.activeEnemies){
         if(enemy.toDestroy === true){
@@ -475,7 +542,8 @@ function destroyEnemies(){
     }
 }
 function fireProjectiles(){
-    if(state.activeTowers.length !== 0){
+    if(state.activeTowers.length !== 0
+        && state.activeEnemies.length !== 0){
         for(let tower of state.activeTowers){
             tower.fire()
         }
@@ -521,7 +589,6 @@ function selectTower(e){
    // click to create new tower class
 
 }
-
 function buildTower(ele){
     let data = {}
     let id = state.towerToBuild
@@ -545,31 +612,42 @@ function buildTower(ele){
     }
     state.isSelecting = false
 }
+function updatePlayerHealth(){
 
+}
 function spawnEnemies(){
     let spawnPoint = state.pathArr[0]
     let divX = spawnPoint[0]
     let divY = spawnPoint[1]
 
-    let x = divX/16
-    let y = divY/9
+    let x = divX/state.scene.xGrid
+    let y = divY/state.scene.yGrid
 
     let waveInfoArr = state.waveInfo
+    let timeline = 0 // the linear progression of time
 
     for(let waveCount = 0; waveCount < state.totalWaves; waveCount++){
         let waveData = waveInfoArr[waveCount]
+        setTimeout(function(){
 
-        for(let subwave = 0; subwave < waveData.enemyTypes.length; subwave++){
-            setTimeout(function(){
-                let enemyToSpawn = waveData.enemyTypes[subwave]
-                for (let noOfEnemies = 0; noOfEnemies < waveData.noOfEach[subwave]; noOfEnemies++){
-                    setTimeout(spawnEnemy(enemyToSpawn,x,y),0)
-                }
-            }, waveData.intervalInMS)
-        }
+            for(let subwave = 0; subwave < waveData.enemyTypes.length; subwave++){
+
+                setTimeout(function(){
+                    let enemyToSpawn = waveData.enemyTypes[subwave]
+
+                    for (let noOfEnemies = 0; noOfEnemies < waveData.noOfEach[subwave];
+                         noOfEnemies++){
+                        setTimeout(function(){
+                            spawnEnemy(enemyToSpawn, x, y)
+                            }, 0)
+                    }
+                }, timeline)
+                timeline += waveData.interval[subwave]
+            }
+            timeline += waveData.pauseTillNextWave
+        }, timeline)
     }
 }
-
 function spawnEnemy(id, xRatio, yRatio){
     let data = findObjectInArray(id, enemyDataArr)
     let enemyDiv = document.createElement('div')
@@ -595,13 +673,11 @@ function spawnEnemy(id, xRatio, yRatio){
 
     state.activeEnemies.push(enemy)
 }
-
 // Functional Functions
 function removeMouseIcon(ele){
     document.removeEventListener('mousemove', followCursor)
     ele.remove()
 }
-
 function followCursor(e){
     let x = e.clientX
     let y = e.clientY
@@ -610,14 +686,12 @@ function followCursor(e){
     cursor.style.left = x + "px"
     cursor.style.top = y +"px"
 }
-
 function getParentWH(childEle){
     let arr = []
     arr[0] = childEle.parentElement.clientWidth
     arr[1] = childEle.parentElement.clientHeight
     return arr
 }
-
 function findObjectInArray(id,arr){
     for (let t of arr){
         if(t.id == id){
@@ -625,7 +699,6 @@ function findObjectInArray(id,arr){
         }
     }
 }
-
 function getNextID(prefix,arr){
     let uid = 0
 
@@ -643,7 +716,6 @@ function getNextID(prefix,arr){
     }
     return `${prefix}${uid}`
 }
-
 function findCellMouseIsOver(){
     document.addEventListener('click', function(e){
         let x = e.clientX
@@ -662,28 +734,12 @@ function findCellMouseIsOver(){
         }
     })
 }
-
 function orientateElement(imageEle, cwDegreesFromTop){
     imageEle.setAttribute('style', `transform: rotate(${cwDegreesFromTop}deg)`)
 }
-
 function gridToRatio(totalGridLength, gridToMove){
     return gridToMove / totalGridLength
 }
-
-function setCollider(centerX, centerY, left, top, size = 1){
-    // left will be < centerX
-    // top will be < centerY
-    // size is a value of 0 to 1
-
-    let leftBorder = centerX - (centerX - left) * size
-    let rightBorder = centerX + (centerX - left) * size
-    let topBorder = centerY - (centerY - top) * size
-    let bottomBorder = centerY + (centerY - top) * size
-
-    return [leftBorder, rightBorder, topBorder, bottomBorder]
-}
-
 function tanInv(opp, adj){
     let deg = (Math.atan(opp / adj)/(2*Math.PI))*360
     if (opp < 0 && adj < 0){
@@ -693,14 +749,43 @@ function tanInv(opp, adj){
     }
     return deg
 }
+function magnitude(x,y){
+    return Math.sqrt(Math.pow(x,2)+Math.pow(y,2))
+}
+function setCollider(centerX, centerY, left, top, size = 1){
 
+    let leftBorder = centerX - (centerX - left) * size
+    let rightBorder = centerX + (centerX - left) * size
+    let topBorder = centerY - (centerY - top) * size
+    let bottomBorder = centerY + (centerY - top) * size
+
+    return [leftBorder, rightBorder, topBorder, bottomBorder]
+}
 function isCollided(objectA, objectB){
-    // get the center XY
-    // get the size
+    //collides with ALL elements - to change?
+    //console.log(`Enemy:${objectA.id} | Projectile:${objectB.id}`)
+
     let isXOverlap = false
     let isYOverlap = false
 
-    for (let line of objectA){
+    // console.log(`A:${objectA.collider[0]},${objectA.collider[1]}`)
+    // console.log(`B:${objectB.collider[0]},${objectB.collider[1]}`)
 
+    let vertArrA = [objectA.collider[0],objectA.collider[1]]
+    let vertArrB = [objectB.collider[0],objectB.collider[1]]
+    let horiArrA = [objectA.collider[2],objectA.collider[3]]
+    let horiArrB = [objectB.collider[2],objectB.collider[3]]
+
+    for (let line of vertArrA){
+        if(line >= vertArrB[0] && line <= vertArrB[1]){
+            isXOverlap = true
+        }
     }
+    for (let line of horiArrA){
+        if(line >= horiArrB[0] && line <= horiArrB[1]){
+            isYOverlap = true
+        }
+    }
+    // console.log(`X:${isXOverlap}, Y:${isYOverlap}`)
+    return (isXOverlap === true && isYOverlap === true)
 }

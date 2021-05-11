@@ -139,7 +139,7 @@ body {
 #follow-cursor {
   position: fixed;
   overflow: scroll;
-  transition: 0.1s;
+  transition: 0.01s;
   transform: translate(-50%, -50%);
 }
 
