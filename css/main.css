@@ -1,13 +1,13 @@
 body {
   max-height: 1080px;
   max-width: 1920px;
-  background-color: #d9e57e;
+  background-color: #22241a;
 }
 
 .stage {
   display: grid;
   grid-template-rows: 1fr 2fr 9fr;
-  background-color: chartreuse;
+  background-color: #3fcb5f;
   max-height: 1080px;
   max-width: 1920px;
   padding: 0 20%;
@@ -18,6 +18,7 @@ body {
   grid-template-columns: repeat(16, 1fr);
   justify-items: center;
   align-items: center;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 #tower-bar {
@@ -43,6 +44,7 @@ body {
 .text {
   font-family: "KoHo", sans-serif;
   font-size: 20pt;
+  color: #ffffff;
   text-align: center;
 }
 
@@ -135,7 +137,7 @@ body {
   left: 0;
   grid-template-columns: repeat(16, 1fr);
   grid-template-rows: repeat(9, 1fr);
-  background-color: lightgray;
+  background-color: rgba(211, 211, 211, 0);
   border-style: solid;
   border-color: black;
 }
@@ -173,6 +175,15 @@ body {
 
 .projectile-img, .enemy-img {
   margin: 0 auto;
+  width: 100%;
+}
+
+#background-img {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
   width: 100%;
 }
 

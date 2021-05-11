@@ -49,15 +49,26 @@ let waveDataArr = [
             id: 0,
             // defines each subwave
             // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
+            enemyTypes: [0],
+            // defines no. of enemies per subwave
+            noOfEach: [1],
+            // defines interval between each subwave
+            interval: [1000],
+            pauseTillNextWave: 7000
+        },
+        {
+            id: 1,
+            // defines each subwave
+            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
             enemyTypes: [0, 0, 0, 0, 0],
             // defines no. of enemies per subwave
             noOfEach: [1, 1, 1, 1, 1],
             // defines interval between each subwave
             interval: [2000, 2000, 2000, 2000, 2000],
-            pauseTillNextWave: 7000
+            pauseTillNextWave: 4000
         },
         {
-            id: 1,
+            id: 2,
             // defines each subwave
             // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
             enemyTypes: [0, 1, 0, 1, 0],
@@ -68,16 +79,17 @@ let waveDataArr = [
             pauseTillNextWave: 1000
         },
         {
-            id: 2,
+            id: 3,
             // defines each subwave
             // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
-            enemyTypes: [0],
+            enemyTypes: [1, 1, 1, 1, 1,1,1,1,1,1],
             // defines no. of enemies per subwave
-            noOfEach: [1],
+            noOfEach: [1, 1, 1, 1, 1,1,1,1,1,1],
             // defines interval between each subwave
-            interval: [1000],
-            pauseTillNextWave: 7000
+            interval: [1000, 1000,1000, 1000, 3000, 1000, 1000, 1000, 1000, 3000,],
+            pauseTillNextWave: 1000
         }
+
     ]
 let projectileDataArr = [
     {
@@ -107,8 +119,8 @@ let state = {
     activeProjectiles:[],
     pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
     currentWave: 1,
-    totalWaves: 2,
-    waveInfo: [waveDataArr[0], waveDataArr[1]], // [waveDataArr[2]],//
+    totalWaves: 3,
+    waveInfo: [waveDataArr[1], waveDataArr[2],waveDataArr[3]], // [waveDataArr[2]],//
     timeBetweenWaves: 2000,
     scene: {},
     playerHealth: 3,
@@ -476,8 +488,8 @@ function initialiseTowerBar(){
         let newTowerCostText = document.createElement('p')
 
         // Create text or content
-        newTowerBtn.setAttribute('class', 'btn')
-        newTowerBtn.setAttribute('class', 'tower-img')
+
+        newTowerBtn.setAttribute('class', 'tower-img btn')
         newTowerBtn.setAttribute('type', 'image')
         newTowerBtn.setAttribute('name', tower.name)
         newTowerBtn.setAttribute('src', tower.towerImg)
@@ -644,7 +656,7 @@ function updatePlayerHealth(change=0){
     let healthHTML = document.getElementById('lives-text')
     healthHTML.textContent = state.playerHealth
 }
-function updateWaveValue(currentWave = 1){
+function updateWaveValue(){
     let totalWaveHTML = document.getElementById('total-waves-text')
     let currWaveHTML = document.getElementById('current-wave-text')
 
@@ -658,7 +670,7 @@ function updateResourceValue(change = 0){
     state.playerResource += change
 
     let resource = state.playerResource.toString()
-    console.log(resource)
+
     resourceStr = resource.split("")
 
     if(resourceStr.length < 4){
@@ -694,12 +706,17 @@ function spawnEnemies(){
                             spawnEnemy(enemyToSpawn, x, y)
                             }, 0)
                     }
+                    console.log(state.currentWave)
+                    //if() build enemy count arr and check enemy count to determine current wave
                 }, timeline)
                 timeline += waveData.interval[subwave]
             }
             timeline += waveData.pauseTillNextWave
+
+            //state.currentWave
+            //console.log(timeline)
         }, timeline)
-        state.currentWave+=1
+
     }
 }
 function spawnEnemy(id, xRatio, yRatio){

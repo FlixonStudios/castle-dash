@@ -7,7 +7,7 @@ $lg: 960px;
 body{
   max-height: $h;
   max-width: $w;
-  background-color: #d9e57e;
+  background-color: #22241a;
 
 }
 
@@ -18,7 +18,7 @@ body{
 .stage {
   display: grid;
   grid-template-rows: 1fr 2fr 9fr;
-  background-color: chartreuse;
+  background-color: #3fcb5f;
   max-height: $h;
   max-width: $w;
   padding: 0 20%;
@@ -28,6 +28,7 @@ body{
   grid-template-columns: repeat(16,1fr);
   justify-items: center;
   align-items: center;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 #tower-bar-container{
@@ -47,11 +48,9 @@ body{
 }
 
 .slot{
-
   display: grid;
   grid-template-rows: 1fr 1fr;
   grid-template-columns: 1fr 1fr;
-
 }
 
 #lives-icon{
@@ -65,6 +64,7 @@ body{
 .text{
   font-family: 'KoHo', sans-serif;
   font-size: 20pt;
+  color: #ffffff;
   text-align: center;
 }
 .tower-img-container{
@@ -148,7 +148,7 @@ body{
   left: 0;
   grid-template-columns: repeat(16,1fr);
   grid-template-rows: repeat(9, 1fr);
-  background-color: lightgray;
+  background-color: rgba(211,211,211,0);
   border-style: solid;
   border-color: black;
 }
@@ -164,9 +164,15 @@ body{
 
 .tower-img{
   margin: 0 auto;
-  width: 50%
+  width: 50%;
 }
-
+//#background-container{
+//  position: absolute;
+//  width: 100%;
+//  height: 100%;
+//  top: 0;
+//  left: 0;
+//}
 #projectile-container, #enemy-container{
   position: absolute;
   width: 100%;
@@ -187,9 +193,16 @@ body{
 
 .projectile-img, .enemy-img{
   margin: 0 auto;
-  width: 100%
+  width: 100%;
 }
-
+#background-img{
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
 #highlighted{
   background-color: lightpink;
 }
