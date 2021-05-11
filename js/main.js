@@ -82,10 +82,28 @@ let state = {
     activeProjectiles:[],
     pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
     totalWaves: 1,
-    waveInfo: [waveDataArr[0]]
+    waveInfo: [waveDataArr[0]],
+    scene: {}
 }
 
 // Class definitions
+
+class Scene{
+    constructor(ele, xGrid, yGrid) {
+        this.ele = ele
+        this.xGrid = xGrid
+        this.yGrid = yGrid
+        this.updateSceneParams()
+    }
+    updateSceneParams(){
+        this.sceneW = this.ele.clientWidth
+        this.sceneH = this.ele.clientHeight
+        this.xUnit = this.sceneW/this.xGrid
+        this.yUnit = this.sceneH/this.yGrid
+        this.xHalf = this.xUnit/2
+        this.yHalf = this.yUnit/2
+    }
+}
 
 class Tower{
     constructor(name, cost, damage, speed, range, towerImg, orientation, htmlEle, projectileId) {
@@ -152,12 +170,8 @@ class Tower{
         this.xDir = xDiff / Math.sqrt(Math.pow(xDiff,2)+Math.pow(yDiff,2))
         this.yDir = yDiff / Math.sqrt(Math.pow(xDiff,2)+Math.pow(yDiff,2))
 
-        let deg = (Math.atan(yDiff / xDiff)/(2*Math.PI))*360
-        if (yDiff < 0 && xDiff < 0){
-            deg += 180
-        }else if (yDiff > 0 && xDiff < 0){
-            deg += 180
-        }
+        let deg = tanInv(yDiff, xDiff)
+
         orientateElement(this.htmlEle, this.orientation + deg)
     }
     fire(){
@@ -189,6 +203,8 @@ class Enemy{
         this.xPosRatio = xPosRatio
         this.yPosRatio = yPosRatio
         this.updateCenterPosition()
+        this.collider = setCollider(this.centerX, this.centerY,
+            this.xPosRatio, this.yPosRatio, 0.5)
         this.prevWaypoint = 0
         this.nextWaypoint = []
         this.findNextWaypoint()
@@ -197,8 +213,10 @@ class Enemy{
     updateCenterPosition(){
         let eleWidth = this.htmlEle.getBoundingClientRect().width
         let eleHeight = this.htmlEle.getBoundingClientRect().height
-        this.centerX = this.xPosRatio + (eleWidth/getParentWH(this.htmlEle)[0])/2
-        this.centerY = this.yPosRatio + (eleHeight/getParentWH(this.htmlEle)[1])/2
+        this.centerX = this.xPosRatio + (eleWidth/ state.scene.sceneW)/2
+        this.centerY = this.yPosRatio + (eleHeight/state.scene.sceneH)/2
+        // console.log(`${this.xPosRatio}, ${this.yPosRatio}, ${this.centerX}, ${this.centerY}`)
+        // console.log(`collider: ${this.collider}`)
     }
     updateCurrentPosition(xRatioToAdd, yRatioToAdd){
         this.xPosRatio += xRatioToAdd
@@ -207,7 +225,7 @@ class Enemy{
     }
     destroyThis(){
         let currId = this.id
-        let enemyIndex = state.activeEnemies.findIndex(function (ele,index){
+        let enemyIndex = state.activeEnemies.findIndex(function (ele){
             return (ele['id'] === currId)
         })
         state.activeEnemies.splice(enemyIndex, 1)
@@ -237,19 +255,14 @@ class Enemy{
 
         let xDeltaRatio = gridToRatio(16, nextXGrid) - this.centerX
         let yDeltaRatio = gridToRatio(9, nextYGrid) - this.centerY
-
-        if (Math.abs(xDeltaRatio) < 0.03 && Math.abs(yDeltaRatio) < 0.03){
-            return true
-        } else {
-            return false
-        }
+        // need to amend percentage as pixels on y and x is different
+        return (Math.abs(xDeltaRatio) < 0.03 && Math.abs(yDeltaRatio) < 0.03)
     }
     move(){
         if(this.isAtNextWaypoint()){
             this.findNextWaypoint()
             this.prevWaypoint += 1
         }
-
         let speed = this.speed
 
         let nextXGrid = this.nextWaypoint[0]//+ gridToRatio(16, 0.5)
@@ -271,7 +284,8 @@ class Enemy{
 }
 
 class Projectile{
-    constructor(name, speed, projImg, orientation, target, xPosRatio, yPosRatio, xDir, yDir) {
+    constructor(name, speed, projImg, orientation,
+                target, xPosRatio, yPosRatio, xDir, yDir) {
         this.id = getNextID('proj-',state.activeProjectiles)
         this.name = name
         this.speed = speed
@@ -282,15 +296,24 @@ class Projectile{
         this.yDir = yDir
         this.xPosRatio = xPosRatio
         this.yPosRatio = yPosRatio
+
         this.toDestroy = false
         this.initialiseProjectile()
+        this.updateCenterPosition()
+        this.collider = setCollider(this.centerX, this.centerY,
+            this.xPosRatio, this.yPosRatio, 0.5)
     }
     initialiseProjectile(){
         let projDiv = document.createElement('div')
         let htmlImg = document.createElement('img')
 
+        this.htmlImg = htmlImg
+
         projDiv.setAttribute('class', 'projectile')
+        htmlImg.setAttribute('class', 'projectile-img')
         htmlImg.setAttribute('src', this.projImg)
+
+        orientateElement(htmlImg, this.orientation)
 
         let gameArea = document.getElementById("projectile-container")
 
@@ -298,21 +321,20 @@ class Projectile{
         gameArea.appendChild(projDiv)
 
         this.htmlEle = projDiv
-        console.log(state.activeProjectiles)
+        //console.log(state.activeProjectiles)
     }
     updateCurrentPosition(xRatioToAdd, yRatioToAdd){
         this.xPosRatio += xRatioToAdd
         this.yPosRatio += yRatioToAdd
         this.updateCenterPosition()
+        this.loadCurrentPosition()
     }
     updateCenterPosition(){
         let eleWidth = this.htmlEle.getBoundingClientRect().width
         let eleHeight = this.htmlEle.getBoundingClientRect().height
-        this.centerX = this.xPosRatio + (eleWidth/getParentWH(this.htmlEle)[0])/2
-        this.centerY = this.yPosRatio + (eleHeight/getParentWH(this.htmlEle)[1])/2
-        if (this.centerX > 1 || this.centerY > 1){
-            this.toDestroy = true
-        }
+        this.centerX = this.xPosRatio + (eleWidth/state.scene.sceneW)/2
+        this.centerY = this.yPosRatio + (eleHeight/state.scene.sceneW)/2
+
     }
     loadCurrentPosition(){
         this.x = getParentWH(this.htmlEle)[0] * this.xPosRatio
@@ -321,14 +343,36 @@ class Projectile{
         this.htmlEle.style.top = `${this.y}px`
     }
     move(){
-        let unitXRatio = -this.xDir
-        let unitYRatio = -this.yDir
 
-        let newXPosRatio = unitXRatio * this.speed * state.gameSpeed/100
-        let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100
+        if (!this.isOutOfBounds()){
+            let unitXRatio = -this.xDir
+            let unitYRatio = -this.yDir
 
-        this.updateCurrentPosition(newXPosRatio, newYPosRatio)
-        this.loadCurrentPosition()
+            let deg = tanInv(-unitYRatio, -unitXRatio)
+
+            let newXPosRatio = unitXRatio * this.speed * state.gameSpeed/100
+            let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100
+
+            this.updateCurrentPosition(newXPosRatio, newYPosRatio)
+            orientateElement(this.htmlImg, this.orientation + deg)
+        }
+    }
+    isOutOfBounds(){
+        if((this.centerX > 1 || this.centerY > 1)||
+            (this.centerX < 0 || this.centerY < 0)){
+            this.toDestroy = true
+            return true
+        } else {
+            return false
+        }
+    }
+    destroyThis(){
+        let currId = this.id
+        let projIndex = state.activeProjectiles.findIndex(function (ele){
+            return (ele['id'] === currId)
+        })
+        state.activeProjectiles.splice(projIndex, 1)
+        this.htmlEle.remove()
     }
 }
 
@@ -338,7 +382,7 @@ initialiseTowerBar()
 initialiseGameArea()
 findCellMouseIsOver()
 spawnEnemies()
-setInterval(updateElementMethods,30/state.gameSpeed)
+setInterval(updateElementMethods,100/state.gameSpeed)
 
 // Functions!!
 
@@ -383,11 +427,10 @@ function initialiseTowerBar(){
 }
 
 function initialiseGameArea(){
-    let cellColl = document.getElementsByClassName('cell')
-    //console.log(cellObj)
-    for (let cellElement of cellColl){
-        //cellElement.addEventListener('click', buildTower)
-    }
+    let gameArea = document.getElementById('game-area-container')
+    let scene = new Scene(gameArea, 16, 9)
+    state.scene = scene
+
 }
 // Keep Running Functions
 function updateElementMethods(){
@@ -397,6 +440,7 @@ function updateElementMethods(){
     moveProjectiles()
     moveEnemies()
     destroyEnemies()
+    destroyProjectiles()
 }
 
 function updateTowerTargets() {
@@ -444,6 +488,15 @@ function moveProjectiles(){
         }
     }
 }
+function destroyProjectiles(){
+    if(state.activeProjectiles.length !==0){
+        for (let projectile of state.activeProjectiles){
+            if (projectile.toDestroy){
+                projectile.destroyThis()
+            }
+        }
+    }
+}
 
 function selectTower(e){
 
@@ -472,7 +525,6 @@ function selectTower(e){
 function buildTower(ele){
     let data = {}
     let id = state.towerToBuild
-    let cellDiv = ele
 
     if (state.isSelecting){
         data = findObjectInArray(id, towerDataArr)
@@ -482,7 +534,7 @@ function buildTower(ele){
         towerImg.setAttribute('src', data.towerImg)
         towerImg.setAttribute('class', 'tower-img')
 
-        cellDiv.appendChild(towerImg)
+        ele.appendChild(towerImg)
 
         let tower = new Tower(data.name, data.cost, data.damage,
             data.speed, data.range, data.towerImg, data.orientation, towerImg, data.projectileId)
@@ -490,8 +542,6 @@ function buildTower(ele){
         towerImg.setAttribute('id', tower.id)
 
         state.activeTowers.push(tower)
-        // console.log(state.activeTowers)
-        // console.log(state.activeEnemies)
     }
     state.isSelecting = false
 }
@@ -501,12 +551,9 @@ function spawnEnemies(){
     let divX = spawnPoint[0]
     let divY = spawnPoint[1]
 
-    let gridXOffset = (1/16)/2
-    let gridYOffset = (1/9)/2
+    let x = divX/16
+    let y = divY/9
 
-    let x = divX/16 // + gridXOffset
-    let y = divY/9 // + gridYOffset
-    //console.log(`${x}, ${y}`)
     let waveInfoArr = state.waveInfo
 
     for(let waveCount = 0; waveCount < state.totalWaves; waveCount++){
@@ -524,8 +571,7 @@ function spawnEnemies(){
 }
 
 function spawnEnemy(id, xRatio, yRatio){
-    let data = {}
-    data = findObjectInArray(id, enemyDataArr)
+    let data = findObjectInArray(id, enemyDataArr)
     let enemyDiv = document.createElement('div')
     let enemyImg = document.createElement('img')
 
@@ -576,7 +622,6 @@ function findObjectInArray(id,arr){
     for (let t of arr){
         if(t.id == id){
             return t //returns the object
-            break
         }
     }
 }
@@ -624,4 +669,38 @@ function orientateElement(imageEle, cwDegreesFromTop){
 
 function gridToRatio(totalGridLength, gridToMove){
     return gridToMove / totalGridLength
+}
+
+function setCollider(centerX, centerY, left, top, size = 1){
+    // left will be < centerX
+    // top will be < centerY
+    // size is a value of 0 to 1
+
+    let leftBorder = centerX - (centerX - left) * size
+    let rightBorder = centerX + (centerX - left) * size
+    let topBorder = centerY - (centerY - top) * size
+    let bottomBorder = centerY + (centerY - top) * size
+
+    return [leftBorder, rightBorder, topBorder, bottomBorder]
+}
+
+function tanInv(opp, adj){
+    let deg = (Math.atan(opp / adj)/(2*Math.PI))*360
+    if (opp < 0 && adj < 0){
+        deg += 180
+    }else if (opp > 0 && adj < 0){
+        deg += 180
+    }
+    return deg
+}
+
+function isCollided(objectA, objectB){
+    // get the center XY
+    // get the size
+    let isXOverlap = false
+    let isYOverlap = false
+
+    for (let line of objectA){
+
+    }
 }
