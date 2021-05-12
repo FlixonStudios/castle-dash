@@ -120,6 +120,7 @@ let state = {
     pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
     currentWave: 1,
     totalWaves: 3,
+    enemyCounter: 0,
     waveInfo: [waveDataArr[1], waveDataArr[2],waveDataArr[3]], // [waveDataArr[2]],//
     timeBetweenWaves: 2000,
     scene: {},
@@ -662,6 +663,22 @@ function updateWaveValue(){
 
     totalWaveHTML.textContent = state.totalWaves
     currWaveHTML.textContent = state.currentWave
+}
+function calculateCurrentWave(timeline){
+    let total = 0
+    state.enemyCounter+=1
+    let arrOfEnemies = []
+    for (let wave of state.waveInfo){
+        arrOfEnemies.push(wave.enemyTypes.length)
+        total += wave.enemyTypes.length
+        if (state.enemyCounter){
+
+        }
+    }
+
+    if (state.enemyCounter){
+
+    }
 }
 function updateResourceValue(change = 0){
     let resourceHTML = document.getElementById('cash-text')
