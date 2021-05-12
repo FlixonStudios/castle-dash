@@ -1,5 +1,3 @@
-
-
 // Databases
 
 let towerDataArr =[
@@ -140,35 +138,55 @@ let projectileDataArr = [
         name: 'cannonball',
         speed: 0.5,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile272.png',
-        orientation: 0
+        orientation: 0,
+        createSFX: "audio/explosion2__008.wav",
+        destroySFX: "audio/explosion__003.wav",
+        createVolume: 0.1,
+        destroyVolume: 0.5
     },
     {
         id: 1,
         name: 'fireshot',
         speed: 0.8,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile297.png',
-        orientation: 90
+        orientation: 90,
+        createSFX: "audio/explosion3__001.wav",
+        destroySFX: "audio/explosion__003.wav",
+        createVolume: 0.05,
+        destroyVolume: 0.5
     },
     {
         id: 2,
         name: 'silvercannonball',
         speed: 0.6,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile273.png',
-        orientation: 0
+        orientation: 0,
+        createSFX: "audio/explosion3__006.wav",
+        destroySFX: "audio/explosion__003.wav",
+        createVolume: 0.1,
+        destroyVolume: 0.5
     },
     {
         id: 3,
         name: 'flameshot',
         speed: 0.85,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile296.png',
-        orientation: 90
+        orientation: 90,
+        createSFX: "audio/explosion3__002.wav",
+        destroySFX: "audio/explosion__003.wav",
+        createVolume: 0.1,
+        destroyVolume: 0.5
     },
     {
         id: 4,
         name: 'rocket',
         speed: 0.3,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile252.png',
-        orientation: 270
+        orientation: 270,
+        createSFX: "audio/explosion2__007.wav",
+        destroySFX: "audio/explosion3__005.wav",
+        createVolume: 0.1,
+        destroyVolume: 0.5
     }
 
 ]
@@ -188,20 +206,21 @@ let state = {
     killCounter: 0,
     totalEnemies: 0,
     waveInfo: [waveDataArr[1], waveDataArr[2],waveDataArr[3]],
-    totalWaves: 3,// [waveDataArr[2]],//
+    totalWaves: 1, // reassigned later
     timeBetweenWaves: 2000,
     scene: {},
-    playerHealth: 99,
+    playerHealth: 93,
     playerResource: 100,
 }
 
 // Class definitions
 
 class Scene{
-    constructor(ele, xGrid, yGrid) {
+    constructor(ele, xGrid, yGrid, pathImg) {
         this.ele = ele
         this.xGrid = xGrid
         this.yGrid = yGrid
+        this.pathImg = pathImg
         this.updateSceneParams()
     }
     updateSceneParams(){
@@ -302,7 +321,8 @@ class Tower{
                 let p = new Projectile(data.name, data.speed, this.damage, data.projImg,
                     data.orientation, this.currTarget,
                     this.xPosRatio, this.yPosRatio,
-                    this.xDir, this.yDir)
+                    this.xDir, this.yDir, data.createSFX, data.createVolume,
+                    data.destroySFX, data.createVolume)
                 state.activeProjectiles.push(p)
 
                 this.reloadTime = 100
@@ -432,7 +452,8 @@ class Enemy{
 
 class Projectile{
     constructor(name, speed, damage, projImg, orientation,
-                target, xPosRatio, yPosRatio, xDir, yDir) {
+                target, xPosRatio, yPosRatio, xDir, yDir,
+                createSFX,createVolume,destroySFX,destroyVolume) {
         this.id = getNextID('proj-',state.activeProjectiles)
         this.name = name
         this.speed = speed
@@ -444,7 +465,10 @@ class Projectile{
         this.yDir = yDir
         this.xPosRatio = xPosRatio
         this.yPosRatio = yPosRatio
-
+        this.createSFX = createSFX
+        this.createVolume = createVolume
+        this.destroySFX = destroySFX
+        this.destroyVolume = destroyVolume
         this.toDestroy = false
         this.initialiseProjectile()
         this.updateCenterPosition()
@@ -468,6 +492,7 @@ class Projectile{
         gameArea.appendChild(projDiv)
 
         this.htmlEle = projDiv
+        this.playCreateSFX()
         //console.log(state.activeProjectiles)
     }
     updateCurrentPosition(xRatioToAdd, yRatioToAdd){
@@ -525,16 +550,25 @@ class Projectile{
         let projIndex = state.activeProjectiles.findIndex(function (ele){
             return (ele['id'] === currId)
         })
+        this.playDestroySFX()
         state.activeProjectiles.splice(projIndex, 1)
         this.htmlEle.remove()
+    }
+    playDestroySFX(){
+        playSFX(this.destroySFX,this.destroyVolume)
+    }
+    playCreateSFX(){
+        playSFX(this.createSFX,this.createVolume)
     }
 }
 
 // Main Execution
 
 initialiseUI()
+loadMusic("music/Venus.wav", 0.3)
 initialiseTowerBar()
 initialiseGameArea()
+initialisePathArea()
 findCellMouseIsOver()
 spawnEnemies()
 setInterval(updateElementMethods,16/state.gameSpeed)
@@ -552,9 +586,7 @@ function loadRestart(isWin){
     }else{
         loseHTML.click()
     }
-
 }
-
 
 function initialiseUI(){
     updatePlayerHealth()
@@ -605,7 +637,37 @@ function initialiseGameArea(){
     let gameArea = document.getElementById('game-area-container')
     let scene = new Scene(gameArea, 16, 9)
     state.scene = scene
+    state.totalWaves = state.waveInfo.length
+}
 
+function initialisePathArea(){
+    let pathTerrainArr = []
+    for(let wave of state.waveInfo){
+
+        if(!pathTerrainArr.includes(wave.path)){
+            pathTerrainArr.push(wave.path)
+        }
+    }
+    console.log(pathTerrainArr)
+    console.log(state.scene.xGrid)
+    for(let path of pathTerrainArr){
+        console.log(path)
+        for(let cell of path){
+            //find cell in gameArea
+            let x = cell[0]
+            let y = cell[1]
+            let cellId = 0
+            cellId = x + y * state.scene.xGrid
+            console.log(cellId)
+            let cellDiv = document.getElementById(`${cellId}`)
+            console.log(cellDiv.className)
+            if (cellDiv.className !== 'non-buildable'){
+                cellDiv.setAttribute('class', 'cell non-buildable')
+
+            }
+
+        }
+    }
 }
 // Keep Running Functions
 function updateElementMethods(){
@@ -792,8 +854,6 @@ function updateResourceValue(change = 0){
 function spawnEnemies(){
     let waveInfoArr = state.waveInfo
 
-
-
     let timeline = 0 // the linear progression of time
 
     for(let waveCount = 0; waveCount < state.totalWaves; waveCount++){
@@ -819,7 +879,6 @@ function spawnEnemies(){
                             spawnEnemy(enemyToSpawn, x, y, waveInfoArr[waveCount])
                             }, 0)
                     }
-
                     calculateCurrentWave()
                 }, timeline)
                 timeline += waveData.interval[subwave]
@@ -981,4 +1040,19 @@ function isCollided(objectA, objectB){
     }
     // console.log(`X:${isXOverlap}, Y:${isYOverlap}`)
     return (isXOverlap === true && isYOverlap === true)
+}
+function loadMusic(url, volume = 0.5){
+    let music = new Audio(url)
+    music.loop = true
+    music.volume = volume
+    music.play()
+}
+function playSFX(audioSource, volume= 0.5){
+    let audio = new Audio(audioSource)
+    console.log(audioSource)
+    audio.volume = volume
+    audio.play()
+    // setTimeout(function (){
+    //     delete audio
+    // },2000)
 }
