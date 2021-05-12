@@ -11,7 +11,7 @@
     <title>castle-dash-html</title>
 </head>
 <body>
-<div class="stage">
+<div id="stage">
     <div id="battle-ui">
         <img id='lives-icon' src="imgs/heart.png" alt="lives"/>
         <div id="lives">
@@ -32,7 +32,12 @@
         <div id="cash" class="text">$</div>
         <div id="cash-text" class="text">0000</div>
         <div id="menu" class="text">Menu</div>
-        <input type="image" id="menu-img" src="" alt="menu-img" />
+        <div id="menu-img-container">
+            <a href="#" >
+                <img id="menu-img" src="imgs/blue-menu-icon.png" alt="menu-img"/>
+            </a>
+        </div>
+
     </div>
     <div id="tower-bar-container">
         <div id="tower-bar">
@@ -199,10 +204,10 @@
         </div>
         <div id="projectile-container"></div>
         <div id="enemy-container"></div>
-
-
     </div>
 </div>
+<a id="win-link" href="winscreen.html" id="win-screen"/>
+<a id="lose-link" href="losescreen.html" id="lose-screen"/>
 
 <script src="js/main.js"></script>
 </body>

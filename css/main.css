@@ -1,13 +1,51 @@
 body {
   max-height: 1080px;
   max-width: 1920px;
-  background-color: #22241a;
+  background-color: #000000;
 }
 
-.stage {
+#start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: black;
+}
+
+.flex-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#title-text {
+  font-family: "VT323", monospace;
+  color: white;
+  font-size: 150pt;
+  text-align: center;
+  margin: 0;
+}
+
+#start-btn-img {
+  width: 40%;
+}
+
+#restart-btn-img {
+  width: 100%;
+}
+
+#quit-btn-img {
+  width: 30%;
+}
+
+#stage-container {
+  display: none;
+}
+
+#stage {
   display: grid;
   grid-template-rows: 1fr 2fr 9fr;
-  background-color: #3fcb5f;
+  background-color: black;
   max-height: 1080px;
   max-width: 1920px;
   padding: 0 20%;
@@ -21,15 +59,26 @@ body {
   background: rgba(0, 0, 0, 0.3);
 }
 
+#menu-img-container {
+  display: flex;
+}
+
+#menu-img {
+  width: 80%;
+}
+
 #tower-bar {
   display: grid;
   grid-template-columns: 1fr 2fr 2fr 2fr 2fr 2fr 2fr 2fr 1fr;
+  background-color: orange;
 }
 
 .slot {
   display: grid;
   grid-template-rows: 1fr 1fr;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 1fr;
+  background: url("../imgs/frame-pixel.png");
+  background-size: cover;
 }
 
 #lives-icon {
@@ -47,6 +96,16 @@ body {
   color: #ffffff;
   text-align: center;
 }
+@media (max-width: 480px) {
+  .text {
+    font-size: 10pt;
+  }
+}
+@media (min-width: 480px) and (max-width: 960px) {
+  .text {
+    font-size: 15pt;
+  }
+}
 
 .tower-img-container {
   display: flex;
@@ -56,6 +115,7 @@ body {
 
 .tower-img {
   grid-column: 1/3;
+  grid-row: 1/2;
   margin: 0 auto;
   width: 100%;
 }
@@ -67,20 +127,26 @@ body {
   justify-content: center;
   align-items: center;
 }
-@media (min-width: 480px) and (max-width: 960px) {
-  .tower-name {
-    font-size: 15pt;
-  }
-}
 
 .tower-cost {
   display: flex;
   justify-content: center;
   align-items: center;
+  grid-column: 2/3;
+  grid-row: 2/3;
+}
+
+.tower-text {
+  font-size: 10pt;
+}
+@media (max-width: 480px) {
+  .tower-text {
+    font-size: 6pt;
+  }
 }
 @media (min-width: 480px) and (max-width: 960px) {
-  .tower-cost {
-    font-size: 15pt;
+  .tower-text {
+    font-size: 10pt;
   }
 }
 
@@ -152,8 +218,7 @@ body {
 }
 
 .tower-img {
-  margin: 0 auto;
-  width: 50%;
+  width: 100%;
 }
 
 #projectile-container, #enemy-container {

@@ -1,3 +1,5 @@
+
+
 // Databases
 
 let towerDataArr =[
@@ -7,8 +9,8 @@ let towerDataArr =[
         cost: 10,
         damage: 1,
         speed: 2,
-        range: 4,
-        towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile292.png',
+        range: 2,
+        towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile291.png',
         orientation: 180,
         projectileId: 0
     },
@@ -22,14 +24,47 @@ let towerDataArr =[
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile249.png',
         orientation: 270,
         projectileId: 1
+    },
+    {
+        id: 2,
+        name: 'Rapid Cannon',
+        cost: 30,
+        damage: 2,
+        speed: 4,
+        range: 3,
+        towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile292.png',
+        orientation: 180,
+        projectileId: 2
+    },
+    {
+        id: 3,
+        name: 'Dual Cannon',
+        cost: 40,
+        damage: 2,
+        speed: 2,
+        range: 4,
+        towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile250.png',
+        orientation: 270,
+        projectileId: 1
+    },
+    {
+        id: 4,
+        name: 'Rocket',
+        cost: 40,
+        damage: 3,
+        speed: 0.5,
+        range: 4,
+        towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile206.png',
+        orientation: 270,
+        projectileId: 4
     }
 ]
 let enemyDataArr = [
     {
         id: 0,
         name: 'Soldier',
-        health: 3,
-        speed: 0.01,
+        health: 4,
+        speed: 0.02,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile245.png',
         orientation: 0,
         reward: 2
@@ -44,6 +79,10 @@ let enemyDataArr = [
         reward: 4
     }
 ]
+let pathDataArr = [
+    [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
+    [[0,6],[13,6],[13,4],[15,4]]
+]
 let waveDataArr = [
         {
             id: 0,
@@ -54,7 +93,8 @@ let waveDataArr = [
             noOfEach: [1],
             // defines interval between each subwave
             interval: [1000],
-            pauseTillNextWave: 7000
+            pauseTillNextWave: 7000,
+            path: pathDataArr[0]
         },
         {
             id: 1,
@@ -65,7 +105,8 @@ let waveDataArr = [
             noOfEach: [1, 1, 1, 1, 1],
             // defines interval between each subwave
             interval: [2000, 2000, 2000, 2000, 2000],
-            pauseTillNextWave: 4000
+            pauseTillNextWave: 4000,
+            path: pathDataArr[1]
         },
         {
             id: 2,
@@ -76,7 +117,8 @@ let waveDataArr = [
             noOfEach: [1, 1, 1, 1, 1],
             // defines interval between each subwave
             interval: [2000, 3000, 2000, 3000, 2000],
-            pauseTillNextWave: 1000
+            pauseTillNextWave: 1000,
+            path: pathDataArr[0]
         },
         {
             id: 3,
@@ -87,7 +129,8 @@ let waveDataArr = [
             noOfEach: [1, 1, 1, 1, 1,1,1,1,1,1],
             // defines interval between each subwave
             interval: [1000, 1000,1000, 1000, 3000, 1000, 1000, 1000, 1000, 3000,],
-            pauseTillNextWave: 1000
+            pauseTillNextWave: 1000,
+            path: pathDataArr[1]
         }
 
     ]
@@ -95,7 +138,7 @@ let projectileDataArr = [
     {
         id: 0,
         name: 'cannonball',
-        speed: 0.4,
+        speed: 0.5,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile272.png',
         orientation: 0
     },
@@ -105,7 +148,29 @@ let projectileDataArr = [
         speed: 0.8,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile297.png',
         orientation: 90
+    },
+    {
+        id: 2,
+        name: 'silvercannonball',
+        speed: 0.6,
+        projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile273.png',
+        orientation: 0
+    },
+    {
+        id: 3,
+        name: 'flameshot',
+        speed: 0.85,
+        projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile296.png',
+        orientation: 90
+    },
+    {
+        id: 4,
+        name: 'rocket',
+        speed: 0.3,
+        projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile252.png',
+        orientation: 270
     }
+
 ]
 
 // State Tracker
@@ -119,12 +184,14 @@ let state = {
     activeProjectiles:[],
     pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
     currentWave: 1,
-    totalWaves: 3,
     enemyCounter: 0,
-    waveInfo: [waveDataArr[1], waveDataArr[2],waveDataArr[3]], // [waveDataArr[2]],//
+    killCounter: 0,
+    totalEnemies: 0,
+    waveInfo: [waveDataArr[1], waveDataArr[2],waveDataArr[3]],
+    totalWaves: 3,// [waveDataArr[2]],//
     timeBetweenWaves: 2000,
     scene: {},
-    playerHealth: 3,
+    playerHealth: 99,
     playerResource: 100,
 }
 
@@ -181,7 +248,7 @@ class Tower{
 
         this.xPosRatio = (cellId % 16) / 16
         this.yPosRatio = (Math.floor(cellId / 16))/ 9
-        console.log(`PosRatio:${this.xPosRatio},${this.yPosRatio}`)
+        //console.log(`PosRatio:${this.xPosRatio},${this.yPosRatio}`)
         this.updateCenterPosition()
         orientateElement(this.htmlEle, this.orientation)
     }
@@ -247,7 +314,7 @@ class Tower{
 }
 
 class Enemy{
-    constructor(name, health, speed, reward, enemyImg, htmlEle, xPosRatio, yPosRatio) {
+    constructor(name, health, speed, reward, enemyImg, htmlEle, xPosRatio, yPosRatio, pathArr) {
         this.id = getNextID('enemy-',state.activeEnemies)
         this.name = name
         this.health = health
@@ -259,6 +326,7 @@ class Enemy{
         this.yPosRatio = yPosRatio
         this.updateCenterPosition()
         this.updateCollider()
+        this.pathArr = pathArr
         this.prevWaypoint = 0
         this.nextWaypoint = []
         this.findNextWaypoint()
@@ -290,11 +358,11 @@ class Enemy{
     }
     findNextWaypoint(){
         if(this.nextWaypoint === []){
-            this.nextWaypoint = state.pathArr[1]
-        }else if(this.prevWaypoint+1 < state.pathArr.length){
-            this.nextWaypoint = state.pathArr[this.prevWaypoint + 1]
+            this.nextWaypoint = this.pathArr[1]
+        }else if(this.prevWaypoint+1 < this.pathArr.length){
+            this.nextWaypoint = this.pathArr[this.prevWaypoint + 1]
         }else{
-            this.nextWaypoint = state.pathArr[state.pathArr.length-1]
+            this.nextWaypoint = this.pathArr[this.pathArr.length-1]
             this.htmlEle.style.display = 'none'
             this.damagePlayer()
             this.toDestroy = true
@@ -313,7 +381,7 @@ class Enemy{
         let xError = xDeltaRatio / (1/state.scene.xGrid)
         let yError = yDeltaRatio / (1/state.scene.yGrid)
         // console.log(`DistToX:${xError}|DistToY:${yError}`)
-        return (Math.abs(xError) < 0.01 && Math.abs(yError) < 0.01)
+        return (Math.abs(xError) < 0.05 && Math.abs(yError) < 0.05)
     }
     move(){
         if(this.isAtNextWaypoint()){
@@ -350,6 +418,9 @@ class Enemy{
     checkHealth(){
         if(this.health <= 0){
             updateResourceValue(this.reward)
+            state.killCounter += 1
+          //  console.log(`${state.totalEnemies}, ${state.killCounter}`)
+            checkWin()
             this.toDestroy = true
         }
     }
@@ -467,10 +538,23 @@ initialiseGameArea()
 findCellMouseIsOver()
 spawnEnemies()
 setInterval(updateElementMethods,16/state.gameSpeed)
+setInterval(checkWin, 4000)
 
 // Functions!!
 
 // Run-Once Functions
+
+function loadRestart(isWin){
+    let winHTML = document.getElementById('win-link')
+    let loseHTML = document.getElementById('lose-link')
+    if (isWin){
+        winHTML.click()
+    }else{
+        loseHTML.click()
+    }
+
+}
+
 
 function initialiseUI(){
     updatePlayerHealth()
@@ -488,6 +572,7 @@ function initialiseTowerBar(){
         let newTowerBtnText = document.createElement('p')
         let newTowerCostText = document.createElement('p')
 
+
         // Create text or content
 
         newTowerBtn.setAttribute('class', 'tower-img btn')
@@ -502,12 +587,12 @@ function initialiseTowerBar(){
         newTowerBtn.addEventListener('click', selectTower)
 
         newTowerBtnText.textContent = tower.name
-        newTowerBtnText.setAttribute('class', 'tower-name text' )
+        newTowerBtnText.setAttribute('class', 'tower-name tower-text text' )
         //newTowerBtnText.setAttribute('class', 'text')
 
-        newTowerCostText.textContent = tower.cost
-        newTowerCostText.setAttribute('class', 'tower-cost')
-        newTowerCostText.setAttribute('class', 'text')
+        newTowerCostText.textContent = `$${tower.cost}`
+        newTowerCostText.setAttribute('class', 'tower-cost tower-text text')
+
         // Append
         towerSlot.appendChild(newTowerBtn)
         towerSlot.appendChild(newTowerBtnText)
@@ -555,7 +640,7 @@ function checkColliders(){
                 if(isCollided(enemy, projectile)){
                     projectile.dealDamage(enemy)
                     enemy.checkHealth()
-                    console.log("HIT")
+                    //console.log("HIT")
                 }
             }
         }
@@ -630,8 +715,8 @@ function buildTower(ele){
     data = findObjectInArray(id, towerDataArr)
     let hasResource = false
     hasResource = (state.playerResource >= data.cost)
-    console.log(`${state.playerResource}, ${data.cost}`)
-    console.log(hasResource)
+    // console.log(`${state.playerResource}, ${data.cost}`)
+    // console.log(hasResource)
     if (state.isSelecting && hasResource){
 
         let towerImg = document.createElement('img')
@@ -652,10 +737,15 @@ function buildTower(ele){
     state.isSelecting = false
 }
 function updatePlayerHealth(change=0){
+
     state.playerHealth += change
 
     let healthHTML = document.getElementById('lives-text')
     healthHTML.textContent = state.playerHealth
+
+    if (state.playerHealth <= 0){
+        loadRestart(false)
+    }
 }
 function updateWaveValue(){
     let totalWaveHTML = document.getElementById('total-waves-text')
@@ -664,27 +754,29 @@ function updateWaveValue(){
     totalWaveHTML.textContent = state.totalWaves
     currWaveHTML.textContent = state.currentWave
 }
-function calculateCurrentWave(timeline){
+function calculateCurrentWave(){
     let total = 0
     state.enemyCounter+=1
     let arrOfEnemies = []
     for (let wave of state.waveInfo){
         arrOfEnemies.push(wave.enemyTypes.length)
         total += wave.enemyTypes.length
-        if (state.enemyCounter){
-
+        if (state.enemyCounter === total+1){
+            state.currentWave+=1
+            updateWaveValue()
+            break
         }
-    }
-
-    if (state.enemyCounter){
-
     }
 }
 function updateResourceValue(change = 0){
     let resourceHTML = document.getElementById('cash-text')
     let resourceStr = []
 
-    state.playerResource += change
+    if(state.playerResource + change > 9999){
+        state.playerResource = 9999
+    }else{
+        state.playerResource += change
+    }
 
     let resource = state.playerResource.toString()
 
@@ -697,20 +789,24 @@ function updateResourceValue(change = 0){
     }
     resourceHTML.textContent = resourceStr.join("")
 }
-
 function spawnEnemies(){
-    let spawnPoint = state.pathArr[0]
-    let divX = spawnPoint[0]
-    let divY = spawnPoint[1]
-
-    let x = divX/state.scene.xGrid
-    let y = divY/state.scene.yGrid
-
     let waveInfoArr = state.waveInfo
+
+
+
     let timeline = 0 // the linear progression of time
 
     for(let waveCount = 0; waveCount < state.totalWaves; waveCount++){
         let waveData = waveInfoArr[waveCount]
+
+        let spawnPoint = waveData.path[0]
+
+        let divX = spawnPoint[0]
+        let divY = spawnPoint[1]
+
+        let x = divX/state.scene.xGrid
+        let y = divY/state.scene.yGrid
+
         setTimeout(function(){
             for(let subwave = 0; subwave < waveData.enemyTypes.length;
                 subwave++){
@@ -720,23 +816,21 @@ function spawnEnemies(){
                     for (let noOfEnemies = 0; noOfEnemies < waveData.noOfEach[subwave];
                          noOfEnemies++){
                         setTimeout(function(){
-                            spawnEnemy(enemyToSpawn, x, y)
+                            spawnEnemy(enemyToSpawn, x, y, waveInfoArr[waveCount])
                             }, 0)
                     }
-                    console.log(state.currentWave)
-                    //if() build enemy count arr and check enemy count to determine current wave
+
+                    calculateCurrentWave()
                 }, timeline)
                 timeline += waveData.interval[subwave]
+                countTotalEnemies(1)
             }
             timeline += waveData.pauseTillNextWave
-
-            //state.currentWave
-            //console.log(timeline)
         }, timeline)
 
     }
 }
-function spawnEnemy(id, xRatio, yRatio){
+function spawnEnemy(id, xRatio, yRatio, wave){
     let data = findObjectInArray(id, enemyDataArr)
     let enemyDiv = document.createElement('div')
     let enemyImg = document.createElement('img')
@@ -757,10 +851,20 @@ function spawnEnemy(id, xRatio, yRatio){
     enemyDiv.style.left = xPos + "px"
 
     let enemy = new Enemy(data.name, data.health, data.speed,data.reward,
-                            data.enemyImg, enemyDiv, xRatio, yRatio)
+                            data.enemyImg, enemyDiv, xRatio, yRatio, wave.path)
 
     state.activeEnemies.push(enemy)
 }
+function countTotalEnemies(count){
+    state.totalEnemies+= count
+    //console.log(state.totalEnemies)
+}
+function checkWin(){
+    if(state.killCounter === state.totalEnemies){
+        loadRestart(true)
+    }
+}
+
 // Functional Functions
 function removeMouseIcon(ele){
     document.removeEventListener('mousemove', followCursor)
@@ -808,15 +912,16 @@ function findCellMouseIsOver(){
     document.addEventListener('click', function(e){
         let x = e.clientX
         let y = e.clientY
-
+        let cursorOverlayElement = document.getElementById('follow-cursor')
         //console.log(`${x}, ${y}`)
 
         let eleUnderArr = document.elementsFromPoint(x,y)
         //console.log(eleUnderArr)
+
         for(let i of eleUnderArr){
             if(i.className == 'cell' && state.isSelecting === true){
                 buildTower(i)
-                let cursorOverlayElement = findObjectInArray('follow-cursor', eleUnderArr,)
+                //let cursorOverlayElement = findObjectInArray('follow-cursor', eleUnderArr,)
                 removeMouseIcon(cursorOverlayElement)
             }
         }
