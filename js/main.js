@@ -407,7 +407,7 @@ let state = {
     timeBetweenWaves: 2000,
     scene: {},
     playerHealth: 10,
-    playerResource: 100,
+    playerResource: 20,
 }
 
 // Class definitions
