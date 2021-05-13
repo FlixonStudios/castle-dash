@@ -1,5 +1,4 @@
 // Databases
-
 let towerDataArr =[
     {
         id: 0,
@@ -13,8 +12,8 @@ let towerDataArr =[
         projectileId: 0,
         projectileTracking: 'normal',
         splash: false,
-        splashScale: 1
-
+        splashScale: 1,
+        specialShot: 'none'
     },
     {
         id: 1,
@@ -28,21 +27,23 @@ let towerDataArr =[
         projectileId: 1,
         projectileTracking: 'normal',
         splash: false,
-        splashScale: 1
+        splashScale: 1,
+        specialShot: 'none'
     },
     {
         id: 2,
         name: 'Rapid Turret',
         cost: 30,
         damage: 1,
-        speed: 4,
+        speed: 6,
         range: 3,
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile292.png',
         orientation: 180,
         projectileId: 2,
         projectileTracking: 'normal',
         splash: false,
-        splashScale: 1
+        splashScale: 1,
+        specialShot: 'none'
     },
     {
         id: 3,
@@ -56,7 +57,8 @@ let towerDataArr =[
         projectileId: 1,
         projectileTracking: 'normal',
         splash: false,
-        splashScale: 1
+        splashScale: 1,
+        specialShot: 'dual'
     },
     {
         id: 4,
@@ -70,7 +72,8 @@ let towerDataArr =[
         projectileId: 4,
         projectileTracking: 'homing',
         splash: true,
-        splashScale: 4
+        splashScale: 4,
+        specialShot: 'none'
     }
 ]
 let enemyDataArr = [
@@ -384,7 +387,6 @@ let projectileDataArr = [
 ]
 
 // State Tracker
-
 let state = {
     gameSpeed: 1, //some issues here
     isSelecting: false,
@@ -405,11 +407,10 @@ let state = {
     timeBetweenWaves: 2000,
     scene: {},
     playerHealth: 10,
-    playerResource: 20,
+    playerResource: 100,
 }
 
 // Class definitions
-
 class Scene{
     constructor(ele, xGrid, yGrid, pathImg) {
         this.ele = ele
@@ -427,11 +428,10 @@ class Scene{
         this.yHalf = this.yUnit/2
     }
 }
-
 class Tower{
     constructor(name, cost, damage, speed, range, towerImg,
                 orientation, htmlEle, projectileId, projectileTracking,
-                splash, splashScale) {
+                splash, splashScale, specialShot='none') {
         this.id = getNextID('tower-',state.activeTowers)
         this.name = name
         this.cost = cost
@@ -448,6 +448,7 @@ class Tower{
         this.projectileTracking = projectileTracking
         this.splash = splash
         this.splashScale = splashScale
+        this.specialShot = specialShot
         this.projectileData = findObjectInArray(projectileId, projectileDataArr)
         this.gameArea = document.getElementById('game-area')
         this.updateCurrentPosition()
@@ -515,18 +516,57 @@ class Tower{
         return (dist <= range)
     }
     fire(){
+        if (this.specialShot==='dual'){
+            this.dualFire()
+        }else{
+            if(this.isInRange(this.currTarget)){
+                let data = this.projectileData
+                if (this.reloadTime <= 0){
+                    let p = new Projectile(data.name, data.speed, this.damage, data.projImg,
+                        data.orientation, this.currTarget, this.projectileTracking,
+                        this.splash, this.splashScale,
+                        this.xPosRatio, this.yPosRatio,
+                        this.xDir, this.yDir, data.createSFX, data.createVolume,
+                        data.destroySFX, data.createVolume,
+                        data.destroyVFX)
+                    state.activeProjectiles.push(p)
 
+                    this.reloadTime = 100
+                }else{
+                    this.reloadTime -= this.speed
+                }
+            }
+        }
+    }
+    dualFire(){
         if(this.isInRange(this.currTarget)){
             let data = this.projectileData
+
+            let offset = 0.02
+
+            let p1XPos = this.xPosRatio + this.xPosRatio * offset
+            let p1YPos = this.yPosRatio - this.yPosRatio * offset
+
+            let p2XPos = this.xPosRatio - this.xPosRatio * offset
+            let p2YPos = this.yPosRatio + this.yPosRatio * offset
+
             if (this.reloadTime <= 0){
-                let p = new Projectile(data.name, data.speed, this.damage, data.projImg,
+                let p1 = new Projectile(data.name, data.speed, this.damage, data.projImg,
                     data.orientation, this.currTarget, this.projectileTracking,
                     this.splash, this.splashScale,
-                    this.xPosRatio, this.yPosRatio,
+                    p1XPos,p1YPos,
                     this.xDir, this.yDir, data.createSFX, data.createVolume,
                     data.destroySFX, data.createVolume,
                     data.destroyVFX)
-                state.activeProjectiles.push(p)
+                state.activeProjectiles.push(p1)
+                let p2 = new Projectile(data.name, data.speed, this.damage, data.projImg,
+                    data.orientation, this.currTarget, this.projectileTracking,
+                    this.splash, this.splashScale,
+                    p2XPos, p2YPos,
+                    this.xDir, this.yDir, data.createSFX, data.createVolume,
+                    data.destroySFX, data.createVolume,
+                    data.destroyVFX)
+                state.activeProjectiles.push(p2)
 
                 this.reloadTime = 100
             }else{
@@ -535,7 +575,6 @@ class Tower{
         }
     }
 }
-
 class Enemy{
     constructor(name, health, speed, reward, enemyImg, htmlEle, xPosRatio, yPosRatio, pathArr) {
         this.id = getNextID('enemy-',state.activeEnemies)
@@ -631,7 +670,11 @@ class Enemy{
         let newXPosRatio = unitXRatio * speed * state.gameSpeed/10
         let newYPosRatio = unitYRatio * speed * state.gameSpeed/10
 
+        let deg = tanInv(unitXRatio, -unitYRatio)
+
+        orientateElement(this.enemyImg, deg - 90)
         this.updateCurrentPosition(newXPosRatio, newYPosRatio)
+
     }
     destroyThis(){
         let currId = this.id
@@ -661,7 +704,6 @@ class Enemy{
         updatePlayerHealth(-damage)
     }
 }
-
 class Projectile{
     constructor(name, speed, damage, projImg, orientation,
                 target, tracking = 'normal',
@@ -867,21 +909,19 @@ class Projectile{
 }
 
 // Main Execution
-
-initialiseUI()
-loadMusic("music/Venus.wav", 0.0)
+loadMusic("music/Venus_edited.wav", 0.4)
 initialiseTowerBar()
 initialiseGameArea()
 initialisePathArea()
 findCellMouseIsOver()
+initialiseDeselectTower()
 spawnEnemies()
+initialiseUI()
 setInterval(updateElementMethods,16/state.gameSpeed)
 setInterval(checkWin, 4000)
 
 // Functions!!
-
 // Run-Once Functions
-
 function loadRestart(isWin){
     let winHTML = document.getElementById('win-link')
     let loseHTML = document.getElementById('lose-link')
@@ -898,7 +938,6 @@ function initialiseUI(){
 }
 function initialiseTowerBar(){
     towerDataArr.forEach(function(tower, index){
-
         let towerSlot = document.getElementById(`tower-slot-${index}`)
 
         //Create Element
@@ -906,9 +945,7 @@ function initialiseTowerBar(){
         let newTowerBtnText = document.createElement('p')
         let newTowerCostText = document.createElement('p')
 
-
         // Create text or content
-
         newTowerBtn.setAttribute('class', 'tower-img btn')
         newTowerBtn.setAttribute('type', 'image')
         newTowerBtn.setAttribute('name', tower.name)
@@ -1112,10 +1149,6 @@ function selectTower(e){
     bodyHTML.appendChild(mouseIcon)
 
     document.addEventListener('mousemove', followCursor)
-   // mousing over game-area will highlight cell block
-
-   // click to create new tower class
-
 }
 function buildTower(ele){
 
@@ -1123,8 +1156,6 @@ function buildTower(ele){
     let data = findObjectInArray(id, towerDataArr)
 
     let hasResource = (state.playerResource >= data.cost)
-    // console.log(`${state.playerResource}, ${data.cost}`)
-    // console.log(hasResource)
     if (state.isSelecting && hasResource){
 
         let towerImg = document.createElement('img')
@@ -1137,7 +1168,7 @@ function buildTower(ele){
         let tower = new Tower(data.name, data.cost, data.damage,
             data.speed, data.range, data.towerImg, data.orientation,
             towerImg, data.projectileId, data.projectileTracking,
-            data.splash, data.splashScale)
+            data.splash, data.splashScale, data.specialShot)
 
         towerImg.setAttribute('id', tower.id)
 
@@ -1147,7 +1178,6 @@ function buildTower(ele){
     state.isSelecting = false
 }
 function updatePlayerHealth(change=0){
-
     state.playerHealth += change
 
     let healthHTML = document.getElementById('lives-text')
@@ -1163,6 +1193,7 @@ function updateWaveValue(){
 
     totalWaveHTML.textContent = state.totalWaves
     currWaveHTML.textContent = state.currentWave
+
 }
 function calculateCurrentWave(){
     let total = 0
@@ -1257,7 +1288,7 @@ function spawnEnemy(id, xRatio, yRatio, wave){
     enemyDiv.style.left = xPos + "px"
 
     let enemy = new Enemy(data.name, data.health, data.speed,data.reward,
-                            data.enemyImg, enemyDiv, xRatio, yRatio, wave.path)
+                            enemyImg, enemyDiv, xRatio, yRatio, wave.path)
 
     state.activeEnemies.push(enemy)
 }
@@ -1307,7 +1338,6 @@ function getNextID(prefix,arr){
         {
             let currId = i.id
             let str = currId.substr(prefix.length, currId.length+1)
-
             if (uid < parseInt(str)){
                 uid = parseInt(str)
             }
@@ -1327,13 +1357,41 @@ function findCellMouseIsOver(){
         //console.log(eleUnderArr)
 
         for(let i of eleUnderArr){
-            if(i.className.includes('cell')  && state.isSelecting === true){
+            if(!i.className.includes('non-buildable')
+                && i.className.includes('cell') && state.isSelecting === true){
                 buildTower(i)
                 //let cursorOverlayElement = findObjectInArray('follow-cursor', eleUnderArr,)
                 removeMouseIcon(cursorOverlayElement)
+            }else if(i.className.includes('non-buildable')) {
+
             }
+
         }
     })
+}
+function initialiseDeselectTower(){
+    document.addEventListener('click', function(e){
+        let x = e.clientX
+        let y = e.clientY
+        let cursorOverlayElement = document.getElementById('follow-cursor')
+        let eleUnderArr = document.elementsFromPoint(x,y)
+
+        if (state.isSelecting === true
+            && !checkIfEleArrHasClass(eleUnderArr,'cell')
+        && !checkIfEleArrHasClass(eleUnderArr,'tower-img')){
+            removeMouseIcon(cursorOverlayElement)
+            state.isSelecting = false
+        }
+    })
+}
+function checkIfEleArrHasClass(arr, className){
+    let eleIsInside = false
+    for(let i of arr){
+        if (i.className.includes(className)){
+            eleIsInside = true
+        }
+    }
+    return eleIsInside
 }
 function orientateElement(imageEle, cwDegreesFromTop){
     imageEle.setAttribute('style', `transform: rotate(${cwDegreesFromTop}deg)`)
@@ -1369,15 +1427,8 @@ function setCollider(centerX, centerY, left, top, size = 1){
     return [leftBorder, rightBorder, topBorder, bottomBorder]
 }
 function isCollided(objectA, objectB){
-    //collides with ALL elements - to change?
-    //console.log(`Enemy:${objectA.id} | Projectile:${objectB.id}`)
-
     let isXOverlap = false
     let isYOverlap = false
-
-    // console.log(`A:${objectA.collider[0]},${objectA.collider[1]}`)
-    // console.log(`B:${objectB.collider[0]},${objectB.collider[1]}`)
-
     let vertArrA = [objectA.collider[0],objectA.collider[1]]
     let vertArrB = [objectB.collider[0],objectB.collider[1]]
     let horiArrA = [objectA.collider[2],objectA.collider[3]]
@@ -1393,30 +1444,23 @@ function isCollided(objectA, objectB){
             isYOverlap = true
         }
     }
-    // console.log(`X:${isXOverlap}, Y:${isYOverlap}`)
     return (isXOverlap === true && isYOverlap === true)
 }
 function loadMusic(url, volume = 0.5){
     let music = new Audio(url)
+    music.setAttribute('class', 'audio')
     music.loop = true
     music.volume = volume
     music.play()
 }
 function playSFX(audioSource, volume= 0.5){
     let audio = new Audio(audioSource)
-
     audio.volume = volume
     audio.play()
-    // setTimeout(function (){
-    //     delete audio
-    // },2000)
 }
 function playAnimation(eleId, baseClass, animClassName) {
-
     let animatedEle = document.getElementById(eleId)
-
     animatedEle.className = baseClass
-
     window.requestAnimationFrame(function(time) {
         window.requestAnimationFrame(function(time) {
             animatedEle.className = `${baseClass} ${animClassName}`;
