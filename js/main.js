@@ -7,10 +7,14 @@ let towerDataArr =[
         cost: 10,
         damage: 1,
         speed: 2,
-        range: 2,
+        range: 3,
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile291.png',
         orientation: 180,
-        projectileId: 0
+        projectileId: 0,
+        projectileTracking: 'normal',
+        splash: false,
+        splashScale: 1
+
     },
     {
         id: 1,
@@ -21,18 +25,24 @@ let towerDataArr =[
         range: 4,
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile249.png',
         orientation: 270,
-        projectileId: 1
+        projectileId: 1,
+        projectileTracking: 'normal',
+        splash: false,
+        splashScale: 1
     },
     {
         id: 2,
-        name: 'Rapid Cannon',
+        name: 'Rapid Turret',
         cost: 30,
-        damage: 2,
+        damage: 1,
         speed: 4,
         range: 3,
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile292.png',
         orientation: 180,
-        projectileId: 2
+        projectileId: 2,
+        projectileTracking: 'normal',
+        splash: false,
+        splashScale: 1
     },
     {
         id: 3,
@@ -43,7 +53,10 @@ let towerDataArr =[
         range: 4,
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile250.png',
         orientation: 270,
-        projectileId: 1
+        projectileId: 1,
+        projectileTracking: 'normal',
+        splash: false,
+        splashScale: 1
     },
     {
         id: 4,
@@ -51,86 +64,260 @@ let towerDataArr =[
         cost: 40,
         damage: 3,
         speed: 0.5,
-        range: 4,
+        range: 8,
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile206.png',
         orientation: 270,
-        projectileId: 4
+        projectileId: 4,
+        projectileTracking: 'homing',
+        splash: true,
+        splashScale: 4
     }
 ]
 let enemyDataArr = [
     {
         id: 0,
         name: 'Soldier',
-        health: 4,
+        health: 3,
         speed: 0.02,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile245.png',
         orientation: 0,
-        reward: 2
+        reward: 3
     },
     {
         id: 1,
         name: 'EliteSoldier',
         health: 6,
-        speed: 0.01,
+        speed: 0.02,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile246.png',
         orientation: 0,
         reward: 4
+    },
+    {
+        id: 2,
+        name: 'Operative',
+        health: 4,
+        speed: 0.03,
+        enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile247.png',
+        orientation: 0,
+        reward: 5
+    },
+    {
+        id: 3,
+        name: 'Cyborg',
+        health: 10,
+        speed: 0.015,
+        enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile248.png',
+        orientation: 0,
+        reward: 5
+    },
+    {
+        id: 4,
+        name: 'tank',
+        health: 15,
+        speed: 0.02,
+        enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile268.png',
+        orientation: 0,
+        reward: 10
+    },
+    {
+        id: 5,
+        name: 'Armored Tank',
+        health: 30,
+        speed: 0.01,
+        enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile269.png',
+        orientation: 0,
+        reward: 20
+    },
+    {
+        id: 6,
+        name: 'Biplane',
+        health: 13,
+        speed: 0.025,
+        enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile270.png',
+        orientation: 0,
+        reward: 10
     }
 ]
 let pathDataArr = [
-    [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
-    [[0,6],[13,6],[13,4],[15,4]]
+    [[0,4],[15,4]],
+    [[0,4],[3,4],[3,2],[13,2],[13,4],[15,4]],
+    [[0,6],[6,6],[6,0],[8,0],[8,4],[9,4],[9,0],[11,0],[11,4],[15,4]],
+    [[0,1],[2,1],[2,8],[8,8],[8,7],[12,7],[12,4],[15,4]],
+    [[0,6],[6,6],[6,0],[8,0],[8,7],[14,7],[14,4],[15,4]]
 ]
 let waveDataArr = [
-        {
-            id: 0,
-            // defines each subwave
-            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
-            enemyTypes: [0],
-            // defines no. of enemies per subwave
-            noOfEach: [1],
-            // defines interval between each subwave
-            interval: [1000],
-            pauseTillNextWave: 7000,
-            path: pathDataArr[0]
-        },
-        {
-            id: 1,
-            // defines each subwave
-            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
-            enemyTypes: [0, 0, 0, 0, 0],
-            // defines no. of enemies per subwave
-            noOfEach: [1, 1, 1, 1, 1],
-            // defines interval between each subwave
-            interval: [2000, 2000, 2000, 2000, 2000],
-            pauseTillNextWave: 4000,
-            path: pathDataArr[1]
-        },
-        {
-            id: 2,
-            // defines each subwave
-            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
-            enemyTypes: [0, 1, 0, 1, 0],
-            // defines no. of enemies per subwave
-            noOfEach: [1, 1, 1, 1, 1],
-            // defines interval between each subwave
-            interval: [2000, 3000, 2000, 3000, 2000],
-            pauseTillNextWave: 1000,
-            path: pathDataArr[0]
-        },
-        {
-            id: 3,
-            // defines each subwave
-            // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
-            enemyTypes: [1, 1, 1, 1, 1,1,1,1,1,1],
-            // defines no. of enemies per subwave
-            noOfEach: [1, 1, 1, 1, 1,1,1,1,1,1],
-            // defines interval between each subwave
-            interval: [1000, 1000,1000, 1000, 3000, 1000, 1000, 1000, 1000, 3000,],
-            pauseTillNextWave: 1000,
-            path: pathDataArr[1]
-        }
-
+    {
+        id: 0,
+        // defines each subwave
+        // [0, 1] means 1st subwave will comprise of enemy '0' and 2nd subwave enemy '1'
+        enemyTypes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        // defines no. of enemies per subwave
+        noOfEach: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        // defines interval between each subwave
+        interval: [500,500,500,500,500,500,500,500,500,500,500,500,500,500,500],
+        pauseTillNextWave: 7000,
+        path: pathDataArr[0],
+        isFlightPath: false
+    },
+    {
+        id: 1,
+        enemyTypes: [0,0,0,0,0],
+        noOfEach: [1,1,1,1,1],
+        interval: [2000,2000,2000,2000,2000],
+        pauseTillNextWave: 4000,
+        path: pathDataArr[2],
+        isFlightPath: false
+    },
+    {
+        id: 2,
+        enemyTypes: [0,1,0,1,0],
+        noOfEach: [1,1,1,1,1],
+        interval: [2000,3000,2000,3000,2000],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[2],
+        isFlightPath: false
+    },
+    {
+        id: 3,
+        enemyTypes: [1,1,1,1,1,
+                        1,1,1,1,1],
+        noOfEach: [1,1,1,1,1,
+                    1,1,1,1,1],
+        interval: [1000,1000,1000,1000,3000,
+                    1000,1000,1000,1000,3000],
+        pauseTillNextWave: 5000,
+        path: pathDataArr[2],
+        isFlightPath: false
+    },
+    {
+        id: 4,
+        enemyTypes: [1,1,2,1,2,
+            1,1,2,1,2],
+        noOfEach: [1,1,1,1,1,
+            1,1,1,1,1],
+        interval: [2000,2000,2000,2000,3000,
+            1000,1000,1000,1000,3000],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[1],
+        isFlightPath: false
+    },
+    {
+        id: 5,
+        enemyTypes: [3,1,3,1,3],
+        noOfEach: [1,1,1,1,1],
+        interval: [3000,3000,3000,3000,3000],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[1],
+        isFlightPath: false
+    },
+    {
+        id: 6,
+        enemyTypes: [4,1,2,1,3],
+        noOfEach: [1,1,1,1,1],
+        interval: [2000,2000,2000,2000,2000],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[3],
+        isFlightPath: false
+    },
+    {
+        id: 7,
+        enemyTypes: [4,1,2,2,2,
+            4,1,2,2,2],
+        noOfEach: [1,1,1,1,1,
+            1,1,1,1,1],
+        interval: [3000,3000,3000,3000,3000,
+            3000,3000,3000,3000,3000],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[3],
+        isFlightPath: false
+    },
+    {
+        id: 8,
+        enemyTypes: [4,2,4,2,4,
+                4,2,4,2,4,
+                1,1,1,1,1],
+        noOfEach: [1,1,1,1,1,
+                1,1,1,1,1,
+                1,1,1,1,1],
+        interval: [3000,1000,3000,1000,3000,
+                3000,1000,3000,1000,3000,
+                500,500,500,500,500],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[1],
+        isFlightPath: false
+    },
+    {
+        id: 9,
+        enemyTypes: [5,3,4,2,4,
+                    5,2,4,2,4,
+                    1,2,1,2,1,
+                    5,3,3,3,3],
+        noOfEach: [1,1,1,1,1,
+                    1,1,1,1,1,
+                    1,1,1,1,1,
+                    1,1,1,1,1],
+        interval: [3000,1000,3000,1000,3000,
+                    3000,1000,3000,1000,3000,
+                    2000,2000,2000,2000,2000,
+                    500,500,500,500,500],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[4],
+        isFlightPath: false
+    },
+    {
+        id: 10,
+        enemyTypes: [5,5,4,2,4,
+            5,5,3,3,4,
+            5,5,2,2,1,
+            5,5,3,3,4],
+        noOfEach: [1,1,1,1,1,
+            1,1,1,1,1,
+            1,1,1,1,1,
+            1,1,1,1,1],
+        interval: [2000,1000,2000,2000,2000,
+            2000,1000,2000,1000,2000,
+            2000,2000,2000,2000,2000,
+            500,500,500,500,500],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[3],
+        isFlightPath: false
+    },
+    {
+        id: 11,
+        enemyTypes: [2,2,4,2,4,
+            2,5,3,3,4,
+            2,5,2,2,1,
+            2,5,3,3,4],
+        noOfEach: [1,1,1,1,1,
+            1,1,1,1,1,
+            1,1,1,1,1,
+            1,1,1,1,1],
+        interval: [1000,1000,1000,1000,1000,
+            1000,2000,1000,1000,2000,
+            1000,2000,1000,1000,2000,
+            500,1500,500,1500,500],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[4],
+        isFlightPath: false
+    },
+    {
+        id: 12,
+        enemyTypes: [5,5,4,2,4,
+            5,5,3,3,4,
+            5,5,2,2,1,
+            5,5,3,3,4],
+        noOfEach: [1,1,1,1,1,
+            1,1,1,1,1,
+            1,1,1,1,1,
+            1,1,1,1,1],
+        interval: [1000,500,500,1000,1000,
+            1000,1000,500,1000,500,
+            1000,500,1000,500,500,
+            500,500,500,500,500],
+        pauseTillNextWave: 1000,
+        path: pathDataArr[2],
+        isFlightPath: false
+    }
     ]
 let projectileDataArr = [
     {
@@ -148,7 +335,7 @@ let projectileDataArr = [
     {
         id: 1,
         name: 'fireshot',
-        speed: 0.8,
+        speed: 0.9,
         projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile297.png',
         orientation: 90,
         createSFX: "audio/explosion3__001.wav",
@@ -210,12 +397,15 @@ let state = {
     enemyCounter: 0,
     killCounter: 0,
     totalEnemies: 0,
-    waveInfo: [waveDataArr[1], waveDataArr[2],waveDataArr[3]],
+    waveInfo: [waveDataArr[1], waveDataArr[2],waveDataArr[3],
+                waveDataArr[4],waveDataArr[5],waveDataArr[6],
+                waveDataArr[7],waveDataArr[8],waveDataArr[9],
+                waveDataArr[10],waveDataArr[11],waveDataArr[12]],
     totalWaves: 1, // reassigned later
     timeBetweenWaves: 2000,
     scene: {},
-    playerHealth: 93,
-    playerResource: 100,
+    playerHealth: 10,
+    playerResource: 20,
 }
 
 // Class definitions
@@ -239,7 +429,9 @@ class Scene{
 }
 
 class Tower{
-    constructor(name, cost, damage, speed, range, towerImg, orientation, htmlEle, projectileId) {
+    constructor(name, cost, damage, speed, range, towerImg,
+                orientation, htmlEle, projectileId, projectileTracking,
+                splash, splashScale) {
         this.id = getNextID('tower-',state.activeTowers)
         this.name = name
         this.cost = cost
@@ -253,6 +445,9 @@ class Tower{
         this.xDir = 1
         this.yDir = 0
         this.projectileId = projectileId
+        this.projectileTracking = projectileTracking
+        this.splash = splash
+        this.splashScale = splashScale
         this.projectileData = findObjectInArray(projectileId, projectileDataArr)
         this.gameArea = document.getElementById('game-area')
         this.updateCurrentPosition()
@@ -320,11 +515,13 @@ class Tower{
         return (dist <= range)
     }
     fire(){
+
         if(this.isInRange(this.currTarget)){
             let data = this.projectileData
             if (this.reloadTime <= 0){
                 let p = new Projectile(data.name, data.speed, this.damage, data.projImg,
-                    data.orientation, this.currTarget,
+                    data.orientation, this.currTarget, this.projectileTracking,
+                    this.splash, this.splashScale,
                     this.xPosRatio, this.yPosRatio,
                     this.xDir, this.yDir, data.createSFX, data.createVolume,
                     data.destroySFX, data.createVolume,
@@ -348,6 +545,7 @@ class Enemy{
         this.reward = reward
         this.enemyImg = enemyImg
         this.htmlEle = htmlEle //enemyDiv
+        this.setElementID()
         this.xPosRatio = xPosRatio
         this.yPosRatio = yPosRatio
         this.updateCenterPosition()
@@ -357,6 +555,9 @@ class Enemy{
         this.nextWaypoint = []
         this.findNextWaypoint()
         this.toDestroy = false
+    }
+    setElementID(){
+        this.htmlEle.setAttribute('id', this.id)
     }
     updateCenterPosition(){
         let eleWidth = this.htmlEle.getBoundingClientRect().width
@@ -442,6 +643,7 @@ class Enemy{
         this.htmlEle.remove()
     }
     checkHealth(){
+        this.playHitMarker()
         if(this.health <= 0){
             updateResourceValue(this.reward)
             state.killCounter += 1
@@ -450,6 +652,10 @@ class Enemy{
             this.toDestroy = true
         }
     }
+    playHitMarker(){
+        playAnimation(this.id, 'enemy', 'hit-marker')
+    }
+
     damagePlayer(){
         let damage = 1
         updatePlayerHealth(-damage)
@@ -458,7 +664,9 @@ class Enemy{
 
 class Projectile{
     constructor(name, speed, damage, projImg, orientation,
-                target, xPosRatio, yPosRatio, xDir, yDir,
+                target, tracking = 'normal',
+                splash = false, splashScale = 0,
+                xPosRatio, yPosRatio, xDir, yDir,
                 createSFX,createVolume,destroySFX,destroyVolume,
                 destroyVFX) {
         this.id = getNextID('proj-',state.activeProjectiles)
@@ -468,6 +676,10 @@ class Projectile{
         this.projImg = projImg
         this.orientation = orientation
         this.target = target
+        this.tracking = tracking
+        this.splash = splash
+        this.splashScale = splashScale
+        this.isSplashScaled = false
         this.xDir = xDir
         this.yDir = yDir
         this.xPosRatio = xPosRatio
@@ -525,19 +737,53 @@ class Projectile{
     updateCollider(){
         this.collider = setCollider(this.centerX, this.centerY,
             this.xPosRatio, this.yPosRatio, 0.25)
+
     }
     move(){
+        // console.log(this.tracking)
+        if(this.tracking === 'normal'){
+            if (!this.isOutOfBounds()){
+                let unitXRatio = -this.xDir
+                let unitYRatio = -this.yDir
+
+                let deg = tanInv(-unitYRatio, -unitXRatio)
+
+                let newXPosRatio = unitXRatio * this.speed * state.gameSpeed/100
+                let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100
+
+                this.updateCurrentPosition(newXPosRatio, newYPosRatio)
+                orientateElement(this.htmlImg, this.orientation + deg)
+            }
+        }else if(this.tracking === 'homing'){
+            this.moveHoming()
+        }
+    }
+    moveHoming(){
         if (!this.isOutOfBounds()){
-            let unitXRatio = -this.xDir
-            let unitYRatio = -this.yDir
 
-            let deg = tanInv(-unitYRatio, -unitXRatio)
+            if(!state.activeEnemies.includes(this.target)){
+                this.createDestroyVFX()
+                this.toDestroy=true
+            }else{
+                let homedTarget = this.target
 
-            let newXPosRatio = unitXRatio * this.speed * state.gameSpeed/100
-            let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100
+                let homedTargetX = homedTarget.centerX
+                let homedTargetY = homedTarget.centerY
 
-            this.updateCurrentPosition(newXPosRatio, newYPosRatio)
-            orientateElement(this.htmlImg, this.orientation + deg)
+                let xDelta = homedTargetX - this.centerX
+                let yDelta = homedTargetY - this.centerY
+
+                let unitXRatio = unitVector(xDelta,yDelta)[0]
+                let unitYRatio = unitVector(xDelta,yDelta)[1]
+
+                let deg = tanInv(-unitYRatio, -unitXRatio)
+
+                let newXPosRatio = unitXRatio * this.speed * state.gameSpeed/100
+                let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100
+
+                this.updateCurrentPosition(newXPosRatio, newYPosRatio)
+                orientateElement(this.htmlImg, this.orientation + deg)
+            }
         }
     }
     isOutOfBounds(){
@@ -554,6 +800,24 @@ class Projectile{
         this.createDestroyVFX()
         this.toDestroy = true
     }
+    dealSplashDamage(){
+        if(!this.isSplashScaled){
+            this.scaleColliderForSplash()
+        }
+        let thisProjectile = findObjectInArray(this.id, state.activeProjectiles)
+        checkSingleCollider(thisProjectile)
+        this.createDestroyVFX()
+        this.toDestroy = true
+    }
+    scaleColliderForSplash(){
+
+        this.collider[0] = this.collider[0] - Math.abs(this.collider[0] - this.centerX) * this.splashScale
+        this.collider[1] = this.collider[1] + Math.abs(this.collider[1] - this.centerX) * this.splashScale
+        this.collider[2] = this.collider[2] - Math.abs(this.collider[2] - this.centerY) * this.splashScale
+        this.collider[3] = this.collider[3] + Math.abs(this.collider[3] - this.centerY) * this.splashScale
+        this.isSplashScaled = true
+    }
+
     destroyThis(){
         let currId = this.id
         let projIndex = state.activeProjectiles.findIndex(function (ele){
@@ -579,19 +843,14 @@ class Projectile{
             'particleVFX fadeInOut')
 
         particle.setAttribute('src', this.destroyVFX)
-        //particle.classList.add('animate__animated', 'animate__bounce')
 
         particleDiv.appendChild(particle)
         gameArea.appendChild(particleDiv)
 
-        let eleWidth = particle.getBoundingClientRect().width
-        let eleHeight = particle.getBoundingClientRect().height
-
-        let eleCenterX = this.xPosRatio + (eleWidth/state.scene.sceneW)/2
-        let eleCenterY = this.yPosRatio + (eleHeight/state.scene.sceneH)/2
-
         let x = getParentWH(particleDiv)[0] * this.xPosRatio
         let y = getParentWH(particleDiv)[1] * this.yPosRatio
+
+        this.scaleDestroyVFX(particle)
 
         particleDiv.style.left = `${x}px`
         particleDiv.style.top = `${y}px`
@@ -599,7 +858,11 @@ class Projectile{
         setTimeout(function(){
             particleDiv.remove()
         },1000)
+    }
 
+    scaleDestroyVFX(VFXHTML){
+        VFXHTML.style.height = `${this.splashScale * 50}%`
+        VFXHTML.style.width = `${this.splashScale * 50}%`
     }
 }
 
@@ -628,13 +891,11 @@ function loadRestart(isWin){
         loseHTML.click()
     }
 }
-
 function initialiseUI(){
     updatePlayerHealth()
     updateWaveValue()
     updateResourceValue()
 }
-
 function initialiseTowerBar(){
     towerDataArr.forEach(function(tower, index){
 
@@ -673,15 +934,13 @@ function initialiseTowerBar(){
 
     })
 }
-
 function initialiseGameArea(){
     let gameArea = document.getElementById('game-area-container')
     let pathImgUrl = "imgs/tower-defense-assets/PNG/Default size/towerDefense_tile158.png"
-    let scene = new Scene(gameArea, 16, 9, pathImgUrl)
-    state.scene = scene
+
+    state.scene = new Scene(gameArea, 16, 9, pathImgUrl)
     state.totalWaves = state.waveInfo.length
 }
-
 function initialisePathArea(){
     let pathTerrainArr = []
     for(let wave of state.waveInfo){
@@ -689,12 +948,10 @@ function initialisePathArea(){
             pathTerrainArr.push(wave.path)
         }
     }
-
     for(let path of pathTerrainArr){
         let prevCell = [0,0]
         for(let cell of path){
             let currCell = cell
-
             if (currCell === path[0]){
                 prevCell = currCell
             }
@@ -702,14 +959,11 @@ function initialisePathArea(){
             if (currCell === path[path.length-1]){
                 currCell[0] = currCell[0] - 1
             }
-
             generatePathInBetween(prevCell, currCell)
             prevCell = currCell
-
         }
     }
 }
-
 function generatePathInBetween(prevCell, currCell){
     let prevCellX = prevCell[0]
     let prevCellY = prevCell[1]
@@ -763,9 +1017,28 @@ function checkColliders(){
         for(let enemy of state.activeEnemies){
             for (let projectile of state.activeProjectiles){
                 if(isCollided(enemy, projectile)){
-                    projectile.dealDamage(enemy)
-                    enemy.checkHealth()
+                    if(projectile.splash){
+                        projectile.dealSplashDamage()
+                    }else{
+                        projectile.dealDamage(enemy)
+                        enemy.checkHealth()
+                    }
+                    break
                     //console.log("HIT")
+                }
+            }
+        }
+    }
+}
+function checkSingleCollider(projectile){
+    if(state.activeEnemies.length !== 0){
+        for(let enemy of state.activeEnemies){
+            if(isCollided(enemy, projectile)){
+                console.log(`Hit: ${enemy}`)
+                projectile.dealDamage(enemy)
+                enemy.checkHealth()
+                if (projectile.splash === false){
+                    break
                 }
             }
         }
@@ -845,11 +1118,11 @@ function selectTower(e){
 
 }
 function buildTower(ele){
-    let data = {}
+
     let id = state.towerToBuild
-    data = findObjectInArray(id, towerDataArr)
-    let hasResource = false
-    hasResource = (state.playerResource >= data.cost)
+    let data = findObjectInArray(id, towerDataArr)
+
+    let hasResource = (state.playerResource >= data.cost)
     // console.log(`${state.playerResource}, ${data.cost}`)
     // console.log(hasResource)
     if (state.isSelecting && hasResource){
@@ -862,7 +1135,9 @@ function buildTower(ele){
         ele.appendChild(towerImg)
 
         let tower = new Tower(data.name, data.cost, data.damage,
-            data.speed, data.range, data.towerImg, data.orientation, towerImg, data.projectileId)
+            data.speed, data.range, data.towerImg, data.orientation,
+            towerImg, data.projectileId, data.projectileTracking,
+            data.splash, data.splashScale)
 
         towerImg.setAttribute('id', tower.id)
 
@@ -905,7 +1180,6 @@ function calculateCurrentWave(){
 }
 function updateResourceValue(change = 0){
     let resourceHTML = document.getElementById('cash-text')
-    let resourceStr = []
 
     if(state.playerResource + change > 9999){
         state.playerResource = 9999
@@ -915,7 +1189,7 @@ function updateResourceValue(change = 0){
 
     let resource = state.playerResource.toString()
 
-    resourceStr = resource.split("")
+    let resourceStr = resource.split("")
 
     if(resourceStr.length < 4){
         for(let i = 4 - resourceStr.length; i > 0; i--){
@@ -989,10 +1263,12 @@ function spawnEnemy(id, xRatio, yRatio, wave){
 }
 function countTotalEnemies(count){
     state.totalEnemies+= count
-    //console.log(state.totalEnemies)
+    console.log(state.totalEnemies)
 }
 function checkWin(){
     if(state.killCounter === state.totalEnemies){
+        loadRestart(true)
+    }else if(state.activeEnemies.length===0 && (state.totalEnemies === state.enemyCounter)){
         loadRestart(true)
     }
 }
@@ -1077,6 +1353,12 @@ function tanInv(opp, adj){
 function magnitude(x,y){
     return Math.sqrt(Math.pow(x,2)+Math.pow(y,2))
 }
+function unitVector(x,y){
+    let unitX = x / Math.sqrt(Math.pow(x,2)+Math.pow(y,2))
+    let unitY = y / Math.sqrt(Math.pow(x,2)+Math.pow(y,2))
+    return [unitX,unitY]
+
+}
 function setCollider(centerX, centerY, left, top, size = 1){
 
     let leftBorder = centerX - (centerX - left) * size
@@ -1129,3 +1411,16 @@ function playSFX(audioSource, volume= 0.5){
     //     delete audio
     // },2000)
 }
+function playAnimation(eleId, baseClass, animClassName) {
+
+    let animatedEle = document.getElementById(eleId)
+
+    animatedEle.className = baseClass
+
+    window.requestAnimationFrame(function(time) {
+        window.requestAnimationFrame(function(time) {
+            animatedEle.className = `${baseClass} ${animClassName}`;
+        });
+    });
+}
+
