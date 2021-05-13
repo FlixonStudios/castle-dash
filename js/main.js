@@ -407,7 +407,7 @@ let projectileDataArr = [
         createSFX: "audio/explosion2__007.wav",
         destroySFX: "audio/explosion3__005.wav",
         createVolume: 0.1,
-        destroyVolume: 0.5,
+        destroyVolume: 0.2,
         destroyVFX: 'imgs/tower-defense-assets/explosion.png'
     }
 
@@ -434,7 +434,7 @@ let state = {
     timeBetweenWaves: 2000,
     scene: {},
     playerHealth: 10,
-    playerResource: 100,
+    playerResource: 20,
 }
 
 // Class definitions
