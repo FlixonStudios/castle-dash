@@ -20,8 +20,8 @@ let towerDataArr =[
         name: 'Cannon',
         cost: 20,
         damage: 2,
-        speed: 1,
-        range: 4,
+        speed: 2,
+        range: 5,
         towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile249.png',
         orientation: 270,
         projectileId: 1,
@@ -74,6 +74,21 @@ let towerDataArr =[
         splash: true,
         splashScale: 4,
         specialShot: 'none'
+    },
+    {
+        id: 5,
+        name: 'Scatter Rocket',
+        cost: 35,
+        damage: 1,
+        speed: 0.8,
+        range: 4,
+        towerImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile204.png',
+        orientation: 270,
+        projectileId: 5,
+        projectileTracking: 'normal',
+        splash: true,
+        splashScale: 2,
+        specialShot: 'scatterBomb'
     }
 ]
 let enemyDataArr = [
@@ -129,7 +144,7 @@ let enemyDataArr = [
         speed: 0.01,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile269.png',
         orientation: 0,
-        reward: 20
+        reward: 15
     },
     {
         id: 6,
@@ -382,6 +397,18 @@ let projectileDataArr = [
         createVolume: 0.1,
         destroyVolume: 0.5,
         destroyVFX: 'imgs/tower-defense-assets/explosion.png'
+    },
+    {
+        id: 5,
+        name: 'minirocket',
+        speed: 0.3,
+        projImg:'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile251.png',
+        orientation: 270,
+        createSFX: "audio/explosion2__007.wav",
+        destroySFX: "audio/explosion3__005.wav",
+        createVolume: 0.1,
+        destroyVolume: 0.5,
+        destroyVFX: 'imgs/tower-defense-assets/explosion.png'
     }
 
 ]
@@ -407,7 +434,7 @@ let state = {
     timeBetweenWaves: 2000,
     scene: {},
     playerHealth: 10,
-    playerResource: 20,
+    playerResource: 100,
 }
 
 // Class definitions
@@ -426,6 +453,8 @@ class Scene{
         this.yUnit = this.sceneH/this.yGrid
         this.xHalf = this.xUnit/2
         this.yHalf = this.yUnit/2
+        this.yxRatio = this.yGrid/this.xGrid
+        this.xyRatio = this.xGrid/this.yGrid
     }
 }
 class Tower{
@@ -496,8 +525,8 @@ class Tower{
         let xDiff = (aTower - minX)
         let yDiff = (oTower - minY)
 
-        this.xDir = xDiff / Math.sqrt(Math.pow(xDiff,2)+Math.pow(yDiff,2))
-        this.yDir = yDiff / Math.sqrt(Math.pow(xDiff,2)+Math.pow(yDiff,2))
+        this.xDir = xDiff / magnitude(xDiff,yDiff)
+        this.yDir = yDiff / magnitude(xDiff,yDiff)
 
         let deg = tanInv(yDiff, xDiff)
 
@@ -518,7 +547,10 @@ class Tower{
     fire(){
         if (this.specialShot==='dual'){
             this.dualFire()
-        }else{
+        }else if(this.specialShot==='scatterBomb'){
+            this.scatterBombFire()
+        }
+        else{
             if(this.isInRange(this.currTarget)){
                 let data = this.projectileData
                 if (this.reloadTime <= 0){
@@ -538,16 +570,49 @@ class Tower{
             }
         }
     }
+    scatterBombFire(){
+        if(this.isInRange(this.currTarget)){
+            let data = this.projectileData
+            let ammoCount = 5
+            let error = 0.7
+            let xSign = 1
+            let ySign = 1
+
+            if (Math.random() < 0.5 ){xSign *= -1}
+            if (Math.random() < 0.5 ){ySign *= -1}
+            console.log(`${xSign}, ${ySign}`)
+            if (this.reloadTime <= 0){
+                for (let i = 0; i < ammoCount; i++){
+                    let randX = this.xDir + xSign * this.xDir * error * Math.random()
+                    let randY = this.yDir + ySign * this.yDir * error * Math.random()
+                    console.log(`${randX}, ${randY}`)
+                    let p = new Projectile(data.name, data.speed, this.damage, data.projImg,
+                        data.orientation, this.currTarget, this.projectileTracking,
+                        this.splash, this.splashScale,
+                        this.xPosRatio, this.yPosRatio,
+                        randX, randY, data.createSFX, data.createVolume,
+                        data.destroySFX, data.createVolume,
+                        data.destroyVFX)
+
+                    state.activeProjectiles.push(p)
+
+                    this.reloadTime = 100
+                }
+            }else{
+                this.reloadTime -= this.speed
+            }
+        }
+    }
     dualFire(){
         if(this.isInRange(this.currTarget)){
             let data = this.projectileData
 
             let offset = 0.02
 
-            let p1XPos = this.xPosRatio + this.xPosRatio * offset
+            let p1XPos = this.xPosRatio + this.xPosRatio * offset / state.scene.xyRatio
             let p1YPos = this.yPosRatio - this.yPosRatio * offset
 
-            let p2XPos = this.xPosRatio - this.xPosRatio * offset
+            let p2XPos = this.xPosRatio - this.xPosRatio * offset / state.scene.xyRatio
             let p2YPos = this.yPosRatio + this.yPosRatio * offset
 
             if (this.reloadTime <= 0){
@@ -669,6 +734,7 @@ class Enemy{
 
         let newXPosRatio = unitXRatio * speed * state.gameSpeed/10
         let newYPosRatio = unitYRatio * speed * state.gameSpeed/10
+                                * state.scene.xyRatio
 
         let deg = tanInv(unitXRatio, -unitYRatio)
 
@@ -791,7 +857,7 @@ class Projectile{
                 let deg = tanInv(-unitYRatio, -unitXRatio)
 
                 let newXPosRatio = unitXRatio * this.speed * state.gameSpeed/100
-                let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100
+                let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100 * state.scene.xyRatio
 
                 this.updateCurrentPosition(newXPosRatio, newYPosRatio)
                 orientateElement(this.htmlImg, this.orientation + deg)
@@ -821,7 +887,7 @@ class Projectile{
                 let deg = tanInv(-unitYRatio, -unitXRatio)
 
                 let newXPosRatio = unitXRatio * this.speed * state.gameSpeed/100
-                let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100
+                let newYPosRatio = unitYRatio * this.speed * state.gameSpeed/100 * state.scene.xyRatio
 
                 this.updateCurrentPosition(newXPosRatio, newYPosRatio)
                 orientateElement(this.htmlImg, this.orientation + deg)
