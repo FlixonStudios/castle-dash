@@ -215,13 +215,24 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
-.tower-img {
+.tile-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
 }
 
-#projectile-container, #enemy-container {
+.tower {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+#vfx-container, #projectile-container, #enemy-container {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -229,7 +240,7 @@ body {
   left: 0;
 }
 
-.projectile, .enemy {
+.particle, .projectile, .enemy {
   position: absolute;
   display: flex;
   justify-content: center;
@@ -243,6 +254,27 @@ body {
   width: 100%;
 }
 
+.particleVFX {
+  margin: 0 auto;
+  width: 50%;
+  opacity: 50%;
+}
+
+.fadeInOut {
+  animation: fadeInOut 1s;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 #background-img {
   position: absolute;
   display: flex;

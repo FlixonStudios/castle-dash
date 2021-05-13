@@ -142,7 +142,8 @@ let projectileDataArr = [
         createSFX: "audio/explosion2__008.wav",
         destroySFX: "audio/explosion__003.wav",
         createVolume: 0.1,
-        destroyVolume: 0.5
+        destroyVolume: 0.5,
+        destroyVFX: 'imgs/tower-defense-assets/explosion.png'
     },
     {
         id: 1,
@@ -153,7 +154,8 @@ let projectileDataArr = [
         createSFX: "audio/explosion3__001.wav",
         destroySFX: "audio/explosion__003.wav",
         createVolume: 0.05,
-        destroyVolume: 0.5
+        destroyVolume: 0.5,
+        destroyVFX: 'imgs/tower-defense-assets/explosion.png'
     },
     {
         id: 2,
@@ -164,7 +166,8 @@ let projectileDataArr = [
         createSFX: "audio/explosion3__006.wav",
         destroySFX: "audio/explosion__003.wav",
         createVolume: 0.1,
-        destroyVolume: 0.5
+        destroyVolume: 0.5,
+        destroyVFX: 'imgs/tower-defense-assets/explosion.png'
     },
     {
         id: 3,
@@ -175,7 +178,8 @@ let projectileDataArr = [
         createSFX: "audio/explosion3__002.wav",
         destroySFX: "audio/explosion__003.wav",
         createVolume: 0.1,
-        destroyVolume: 0.5
+        destroyVolume: 0.5,
+        destroyVFX: 'imgs/tower-defense-assets/explosion.png'
     },
     {
         id: 4,
@@ -186,7 +190,8 @@ let projectileDataArr = [
         createSFX: "audio/explosion2__007.wav",
         destroySFX: "audio/explosion3__005.wav",
         createVolume: 0.1,
-        destroyVolume: 0.5
+        destroyVolume: 0.5,
+        destroyVFX: 'imgs/tower-defense-assets/explosion.png'
     }
 
 ]
@@ -200,7 +205,7 @@ let state = {
     activeTowers: [],
     activeEnemies: [],
     activeProjectiles:[],
-    pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
+    //pathArr: [[0,4],[3,4],[3,1],[13,1],[13,4],[15,4]],
     currentWave: 1,
     enemyCounter: 0,
     killCounter: 0,
@@ -322,7 +327,8 @@ class Tower{
                     data.orientation, this.currTarget,
                     this.xPosRatio, this.yPosRatio,
                     this.xDir, this.yDir, data.createSFX, data.createVolume,
-                    data.destroySFX, data.createVolume)
+                    data.destroySFX, data.createVolume,
+                    data.destroyVFX)
                 state.activeProjectiles.push(p)
 
                 this.reloadTime = 100
@@ -374,7 +380,7 @@ class Enemy{
     }
     updateCollider(){
         this.collider = setCollider(this.centerX, this.centerY,
-            this.xPosRatio, this.yPosRatio, 0.5)
+            this.xPosRatio, this.yPosRatio, 0.25)
     }
     findNextWaypoint(){
         if(this.nextWaypoint === []){
@@ -453,7 +459,8 @@ class Enemy{
 class Projectile{
     constructor(name, speed, damage, projImg, orientation,
                 target, xPosRatio, yPosRatio, xDir, yDir,
-                createSFX,createVolume,destroySFX,destroyVolume) {
+                createSFX,createVolume,destroySFX,destroyVolume,
+                destroyVFX) {
         this.id = getNextID('proj-',state.activeProjectiles)
         this.name = name
         this.speed = speed
@@ -469,6 +476,7 @@ class Projectile{
         this.createVolume = createVolume
         this.destroySFX = destroySFX
         this.destroyVolume = destroyVolume
+        this.destroyVFX = destroyVFX
         this.toDestroy = false
         this.initialiseProjectile()
         this.updateCenterPosition()
@@ -506,7 +514,7 @@ class Projectile{
         let eleWidth = this.htmlEle.getBoundingClientRect().width
         let eleHeight = this.htmlEle.getBoundingClientRect().height
         this.centerX = this.xPosRatio + (eleWidth/state.scene.sceneW)/2
-        this.centerY = this.yPosRatio + (eleHeight/state.scene.sceneW)/2
+        this.centerY = this.yPosRatio + (eleHeight/state.scene.sceneH)/2
     }
     loadCurrentPosition(){
         this.x = getParentWH(this.htmlEle)[0] * this.xPosRatio
@@ -516,7 +524,7 @@ class Projectile{
     }
     updateCollider(){
         this.collider = setCollider(this.centerX, this.centerY,
-            this.xPosRatio, this.yPosRatio, 0.75)
+            this.xPosRatio, this.yPosRatio, 0.25)
     }
     move(){
         if (!this.isOutOfBounds()){
@@ -543,6 +551,7 @@ class Projectile{
     }
     dealDamage(targetToDamage){
         targetToDamage.health -= this.damage
+        this.createDestroyVFX()
         this.toDestroy = true
     }
     destroyThis(){
@@ -560,12 +569,44 @@ class Projectile{
     playCreateSFX(){
         playSFX(this.createSFX,this.createVolume)
     }
+    createDestroyVFX(){
+        let particleDiv = document.createElement('div')
+        let particle = document.createElement("img")
+        let gameArea = document.getElementById("vfx-container")
+
+        particleDiv.setAttribute('class', 'particle')
+        particle.setAttribute('class',
+            'particleVFX fadeInOut')
+
+        particle.setAttribute('src', this.destroyVFX)
+        //particle.classList.add('animate__animated', 'animate__bounce')
+
+        particleDiv.appendChild(particle)
+        gameArea.appendChild(particleDiv)
+
+        let eleWidth = particle.getBoundingClientRect().width
+        let eleHeight = particle.getBoundingClientRect().height
+
+        let eleCenterX = this.xPosRatio + (eleWidth/state.scene.sceneW)/2
+        let eleCenterY = this.yPosRatio + (eleHeight/state.scene.sceneH)/2
+
+        let x = getParentWH(particleDiv)[0] * this.xPosRatio
+        let y = getParentWH(particleDiv)[1] * this.yPosRatio
+
+        particleDiv.style.left = `${x}px`
+        particleDiv.style.top = `${y}px`
+
+        setTimeout(function(){
+            particleDiv.remove()
+        },1000)
+
+    }
 }
 
 // Main Execution
 
 initialiseUI()
-loadMusic("music/Venus.wav", 0.3)
+loadMusic("music/Venus.wav", 0.0)
 initialiseTowerBar()
 initialiseGameArea()
 initialisePathArea()
@@ -635,7 +676,8 @@ function initialiseTowerBar(){
 
 function initialiseGameArea(){
     let gameArea = document.getElementById('game-area-container')
-    let scene = new Scene(gameArea, 16, 9)
+    let pathImgUrl = "imgs/tower-defense-assets/PNG/Default size/towerDefense_tile158.png"
+    let scene = new Scene(gameArea, 16, 9, pathImgUrl)
     state.scene = scene
     state.totalWaves = state.waveInfo.length
 }
@@ -643,32 +685,53 @@ function initialiseGameArea(){
 function initialisePathArea(){
     let pathTerrainArr = []
     for(let wave of state.waveInfo){
-
         if(!pathTerrainArr.includes(wave.path)){
             pathTerrainArr.push(wave.path)
         }
     }
-    console.log(pathTerrainArr)
-    console.log(state.scene.xGrid)
-    for(let path of pathTerrainArr){
-        console.log(path)
-        for(let cell of path){
-            //find cell in gameArea
-            let x = cell[0]
-            let y = cell[1]
-            let cellId = 0
-            cellId = x + y * state.scene.xGrid
-            console.log(cellId)
-            let cellDiv = document.getElementById(`${cellId}`)
-            console.log(cellDiv.className)
-            if (cellDiv.className !== 'non-buildable'){
-                cellDiv.setAttribute('class', 'cell non-buildable')
 
+    for(let path of pathTerrainArr){
+        let prevCell = [0,0]
+        for(let cell of path){
+            let currCell = cell
+
+            if (currCell === path[0]){
+                prevCell = currCell
             }
+            // dont create path at last cell, but to the left of it
+            if (currCell === path[path.length-1]){
+                currCell[0] = currCell[0] - 1
+            }
+
+            generatePathInBetween(prevCell, currCell)
+            prevCell = currCell
 
         }
     }
 }
+
+function generatePathInBetween(prevCell, currCell){
+    let prevCellX = prevCell[0]
+    let prevCellY = prevCell[1]
+
+    let currCellX = currCell[0]
+    let currCellY = currCell[1]
+    if (prevCellX === currCellX){
+        for(let i = 0; i <= Math.abs(currCellY-prevCellY); i++){
+            let cellId = prevCellX
+                + (currCellY + Math.sign(prevCellY-currCellY) * i) * state.scene.xGrid
+            printPath(cellId)
+        }
+    }else if(prevCellY===currCellY){
+
+        for(let i = 0; i <= Math.abs(currCellX-prevCellX); i++){
+            let cellId = (prevCellX + Math.sign(currCellX-prevCellX) * i)
+                + currCellY * state.scene.xGrid
+            printPath(cellId);
+        }
+    }
+}
+
 // Keep Running Functions
 function updateElementMethods(){
     updateTowerTargets()
@@ -748,6 +811,16 @@ function destroyProjectiles(){
     }
 }
 
+function printPath(cellId) {
+    let cellDiv = document.getElementById(`${cellId}`)
+    if (!cellDiv.className.includes('path')) {
+        cellDiv.setAttribute('class', 'cell non-buildable path')
+        let pathImgHTML = document.createElement('img')
+        pathImgHTML.setAttribute('src', state.scene.pathImg)
+        pathImgHTML.setAttribute('class', 'tile-overlay')
+        cellDiv.appendChild(pathImgHTML)
+    }
+}
 function selectTower(e){
 
     let towerId = e.target.getAttribute('towerId')
@@ -784,7 +857,7 @@ function buildTower(ele){
         let towerImg = document.createElement('img')
 
         towerImg.setAttribute('src', data.towerImg)
-        towerImg.setAttribute('class', 'tower-img')
+        towerImg.setAttribute('class', 'tower')
 
         ele.appendChild(towerImg)
 
@@ -978,7 +1051,7 @@ function findCellMouseIsOver(){
         //console.log(eleUnderArr)
 
         for(let i of eleUnderArr){
-            if(i.className == 'cell' && state.isSelecting === true){
+            if(i.className.includes('cell')  && state.isSelecting === true){
                 buildTower(i)
                 //let cursorOverlayElement = findObjectInArray('follow-cursor', eleUnderArr,)
                 removeMouseIcon(cursorOverlayElement)
@@ -1049,7 +1122,7 @@ function loadMusic(url, volume = 0.5){
 }
 function playSFX(audioSource, volume= 0.5){
     let audio = new Audio(audioSource)
-    console.log(audioSource)
+
     audio.volume = volume
     audio.play()
     // setTimeout(function (){
