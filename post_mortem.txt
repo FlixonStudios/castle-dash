@@ -1,0 +1,58 @@
+Approach and Process
+What in my process and approach to this project would I do differently next time?
+
+Try to scope down a little bit, so that I can focus a bit more on the UX and aesthetics.
+
+What in my process and approach to this project went well that I would repeat next time?
+
+I think working incrementally and not being too concerned about getting it right the first time has been pivotal in the success of the first project - I'm happy with the outcome.
+
+--
+
+Code and Code Design
+What in my code and program design in the project would I do differently next time?
+
+Get the aspect ratio of the game and elements down correctly instead of figuring it out later is the one thing. I would probably have built in a easier way to create enemy wave data (now is manual).
+
+What in my code and program design in the project went well? Is there anything I would do the same next time?
+
+For each, please include code examples.
+
+Understanding how to divide the game area into x and y ratios and moving the elements based on that allowed the window to scale up and down without affecting the position of the elements in the game area. The following is code in the Enemy.move() method
+
+        let nextXGrid = this.nextWaypoint[0]
+        let nextYGrid = this.nextWaypoint[1]
+
+        let xDeltaRatio = gridToRatio(16, nextXGrid + 0.5)
+                            - this.centerX
+        let yDeltaRatio = gridToRatio(9, nextYGrid + 0.5)
+                            - this.centerY
+
+        let unitXRatio = xDeltaRatio / magnitude(xDeltaRatio,yDeltaRatio)
+        let unitYRatio = yDeltaRatio / magnitude(xDeltaRatio,yDeltaRatio)
+
+        let newXPosRatio = unitXRatio * speed * state.gameSpeed/10
+        let newYPosRatio = unitYRatio * speed * state.gameSpeed/10
+                                * state.scene.xyRatio
+
+        let deg = tanInv(unitXRatio, -unitYRatio)
+
+        orientateElement(this.enemyImg, deg - 90)
+        this.updateCurrentPosition(newXPosRatio, newYPosRatio)
+
+Code design documents or architecture drawings / diagrams.
+
+
+
+SEI Post Mortem
+What habits did I use during this unit that helped me?
+
+Try not to get overwhelmed, rome was not built in a day.
+
+What habits did I have during this unit that I can improve on?
+
+Some code was pushed without refactoring (or rather I knew it could have been refactored, but due to time pressure it was not)
+
+How is the overall level of the course during this unit? (instruction, course materials, etc.)
+
+There was quite a lot of freedom in the requirements of the project thus the level is really self-determined. But no matter the end product, self-learning through work you created yourself is the best.

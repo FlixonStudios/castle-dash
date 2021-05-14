@@ -96,7 +96,7 @@ let enemyDataArr = [
         id: 0,
         name: 'Soldier',
         health: 3,
-        speed: 0.02,
+        speed: 0.01,
         enemyImg: 'imgs/tower-defense-assets/PNG/Default size/towerDefense_tile245.png',
         orientation: 0,
         reward: 3
@@ -173,6 +173,7 @@ let waveDataArr = [
         noOfEach: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         // defines interval between each subwave
         interval: [500,500,500,500,500,500,500,500,500,500,500,500,500,500,500],
+        intervalInSubwave:[0],
         pauseTillNextWave: 7000,
         path: pathDataArr[0],
         isFlightPath: false
@@ -182,6 +183,7 @@ let waveDataArr = [
         enemyTypes: [0,0,0,0,0],
         noOfEach: [1,1,1,1,1],
         interval: [2000,2000,2000,2000,2000],
+        intervalInSubwave:[0],
         pauseTillNextWave: 4000,
         path: pathDataArr[2],
         isFlightPath: false
@@ -191,6 +193,7 @@ let waveDataArr = [
         enemyTypes: [0,1,0,1,0],
         noOfEach: [1,1,1,1,1],
         interval: [2000,3000,2000,3000,2000],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[2],
         isFlightPath: false
@@ -203,6 +206,7 @@ let waveDataArr = [
                     1,1,1,1,1],
         interval: [1000,1000,1000,1000,3000,
                     1000,1000,1000,1000,3000],
+        intervalInSubwave:[0],
         pauseTillNextWave: 5000,
         path: pathDataArr[2],
         isFlightPath: false
@@ -215,6 +219,7 @@ let waveDataArr = [
             1,1,1,1,1],
         interval: [2000,2000,2000,2000,3000,
             1000,1000,1000,1000,3000],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[1],
         isFlightPath: false
@@ -224,6 +229,7 @@ let waveDataArr = [
         enemyTypes: [3,1,3,1,3],
         noOfEach: [1,1,1,1,1],
         interval: [3000,3000,3000,3000,3000],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[1],
         isFlightPath: false
@@ -233,6 +239,7 @@ let waveDataArr = [
         enemyTypes: [4,1,2,1,3],
         noOfEach: [1,1,1,1,1],
         interval: [2000,2000,2000,2000,2000],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[3],
         isFlightPath: false
@@ -245,6 +252,7 @@ let waveDataArr = [
             1,1,1,1,1],
         interval: [3000,3000,3000,3000,3000,
             3000,3000,3000,3000,3000],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[3],
         isFlightPath: false
@@ -260,6 +268,7 @@ let waveDataArr = [
         interval: [3000,1000,3000,1000,3000,
                 3000,1000,3000,1000,3000,
                 500,500,500,500,500],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[1],
         isFlightPath: false
@@ -278,6 +287,7 @@ let waveDataArr = [
                     3000,1000,3000,1000,3000,
                     2000,2000,2000,2000,2000,
                     500,500,500,500,500],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[4],
         isFlightPath: false
@@ -296,6 +306,7 @@ let waveDataArr = [
             2000,1000,2000,1000,2000,
             2000,2000,2000,2000,2000,
             500,500,500,500,500],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[3],
         isFlightPath: false
@@ -314,6 +325,7 @@ let waveDataArr = [
             1000,2000,1000,1000,2000,
             1000,2000,1000,1000,2000,
             500,1500,500,1500,500],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[4],
         isFlightPath: false
@@ -332,6 +344,7 @@ let waveDataArr = [
             1000,1000,500,1000,500,
             1000,500,1000,500,500,
             500,500,500,500,500],
+        intervalInSubwave:[0],
         pauseTillNextWave: 1000,
         path: pathDataArr[2],
         isFlightPath: false
@@ -430,6 +443,7 @@ let state = {
                 waveDataArr[4],waveDataArr[5],waveDataArr[6],
                 waveDataArr[7],waveDataArr[8],waveDataArr[9],
                 waveDataArr[10],waveDataArr[11],waveDataArr[12]],
+    //[waveDataArr[0]],
     totalWaves: 1, // reassigned later
     timeBetweenWaves: 2000,
     scene: {},
@@ -721,8 +735,8 @@ class Enemy{
         }
         let speed = this.speed
 
-        let nextXGrid = this.nextWaypoint[0]//+ gridToRatio(16, 0.5)
-        let nextYGrid = this.nextWaypoint[1]//+ gridToRatio(9, 0.5)
+        let nextXGrid = this.nextWaypoint[0]
+        let nextYGrid = this.nextWaypoint[1]
 
         let xDeltaRatio = gridToRatio(16, nextXGrid + 0.5)
                             - this.centerX
@@ -975,7 +989,7 @@ class Projectile{
 }
 
 // Main Execution
-loadMusic("music/Venus_edited.wav", 0.4)
+loadMusic("music/Venus_edited.wav", 0.1)
 initialiseTowerBar()
 initialiseGameArea()
 initialisePathArea()
@@ -1010,8 +1024,12 @@ function initialiseTowerBar(){
         let newTowerBtn = document.createElement('input')
         let newTowerBtnText = document.createElement('p')
         let newTowerCostText = document.createElement('p')
+        let newTowerBtnDiv = document.createElement('div')
 
         // Create text or content
+
+        newTowerBtnDiv.setAttribute('class', 'tower-btn-container')
+
         newTowerBtn.setAttribute('class', 'tower-img btn')
         newTowerBtn.setAttribute('type', 'image')
         newTowerBtn.setAttribute('name', tower.name)
@@ -1023,7 +1041,7 @@ function initialiseTowerBar(){
 
         newTowerBtn.addEventListener('click', selectTower)
 
-        newTowerBtnText.textContent = tower.name
+        newTowerBtnText.innerHTML = `${tower.name}<br/>$${tower.cost}`
         newTowerBtnText.setAttribute('class', 'tower-name tower-text text' )
         //newTowerBtnText.setAttribute('class', 'text')
 
@@ -1031,9 +1049,10 @@ function initialiseTowerBar(){
         newTowerCostText.setAttribute('class', 'tower-cost tower-text text')
 
         // Append
-        towerSlot.appendChild(newTowerBtn)
+        newTowerBtnDiv.appendChild(newTowerBtn)
+        towerSlot.appendChild(newTowerBtnDiv)
         towerSlot.appendChild(newTowerBtnText)
-        towerSlot.appendChild(newTowerCostText)
+        //towerSlot.appendChild(newTowerCostText)
 
     })
 }
@@ -1217,13 +1236,11 @@ function selectTower(e){
     document.addEventListener('mousemove', followCursor)
 }
 function buildTower(ele){
-
     let id = state.towerToBuild
     let data = findObjectInArray(id, towerDataArr)
 
     let hasResource = (state.playerResource >= data.cost)
     if (state.isSelecting && hasResource){
-
         let towerImg = document.createElement('img')
 
         towerImg.setAttribute('src', data.towerImg)
